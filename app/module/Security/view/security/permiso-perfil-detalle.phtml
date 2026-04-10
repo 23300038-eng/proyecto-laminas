@@ -1,0 +1,54 @@
+<div class="page-header">
+    <h2>Detalle del Permiso</h2>
+</div>
+
+<div style="max-width: 600px; background: white; padding: 2rem; border-radius: 4px;">
+    <div style="margin-bottom: 1.5rem;">
+        <strong style="color: #666;">ID:</strong>
+        <p><?php echo htmlspecialchars($permiso['id']); ?></p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <strong style="color: #666;">Módulo:</strong>
+        <p><?php echo htmlspecialchars($permiso['str_nombre_modulo']); ?></p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <strong style="color: #666;">Perfil:</strong>
+        <p><?php echo htmlspecialchars($permiso['str_nombre_perfil']); ?></p>
+    </div>
+
+    <fieldset style="border: 1px solid #ddd; padding: 1rem; border-radius: 4px; margin: 1.5rem 0; background: #f9f9f9;">
+        <legend style="padding: 0 0.5rem;">Permisos Asignados</legend>
+
+        <div style="margin-bottom: 0.75rem;">
+            <strong>Agregar / Crear:</strong> <?php echo $permiso['bit_agregar'] ? '✓ Sí' : '✗ No'; ?>
+        </div>
+
+        <div style="margin-bottom: 0.75rem;">
+            <strong>Editar / Modificar:</strong> <?php echo $permiso['bit_editar'] ? '✓ Sí' : '✗ No'; ?>
+        </div>
+
+        <div style="margin-bottom: 0.75rem;">
+            <strong>Consultar / Ver:</strong> <?php echo $permiso['bit_consulta'] ? '✓ Sí' : '✗ No'; ?>
+        </div>
+
+        <div style="margin-bottom: 0.75rem;">
+            <strong>Eliminar:</strong> <?php echo $permiso['bit_eliminar'] ? '✓ Sí' : '✗ No'; ?>
+        </div>
+
+        <div style="margin-bottom: 0.75rem;">
+            <strong>Ver Detalle:</strong> <?php echo $permiso['bit_detalle'] ? '✓ Sí' : '✗ No'; ?>
+        </div>
+    </fieldset>
+
+    <div style="margin-bottom: 1.5rem;">
+        <strong style="color: #666;">Creado en:</strong>
+        <p><?php echo htmlspecialchars($permiso['creado_en'] ?? ''); ?></p>
+    </div>
+
+    <div class="btn-group">
+        <a href="/security/permiso-perfil-edit/<?php echo $permiso['id']; ?>" class="btn btn-primary">Editar</a>
+        <a href="/security/permiso-perfil" class="btn btn-secondary">Volver</a>
+    </div>
+</div>

@@ -1,0 +1,59 @@
+<div class="page-header">
+    <h2>Crear Nuevo Usuario</h2>
+</div>
+
+<form method="POST" enctype="multipart/form-data" style="max-width: 600px;">
+    <div class="form-group">
+        <label for="str_nombre_usuario">Nombre de Usuario *</label>
+        <input type="text" id="str_nombre_usuario" name="str_nombre_usuario" required placeholder="Ej: juan.lopez">
+    </div>
+
+    <div class="form-group">
+        <label for="str_correo">Correo Electrónico *</label>
+        <input type="email" id="str_correo" name="str_correo" required placeholder="Ej: juan@novafarma.com">
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label for="str_pwd">Contraseña *</label>
+            <input type="password" id="str_pwd" name="str_pwd" required placeholder="••••••••">
+        </div>
+
+        <div class="form-group">
+            <label for="id_perfil">Perfil *</label>
+            <select id="id_perfil" name="id_perfil" required>
+                <option value="">-- Seleccionar --</option>
+                <?php foreach ($perfiles as $id => $nombre): ?>
+                    <option value="<?php echo $id; ?>"><?php echo htmlspecialchars($nombre); ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label for="str_numero_celular">Celular</label>
+            <input type="tel" id="str_numero_celular" name="str_numero_celular" placeholder="+34666666666">
+        </div>
+
+        <div class="form-group">
+            <label for="id_estado_usuario">Estado</label>
+            <select id="id_estado_usuario" name="id_estado_usuario">
+                <option value="">-- Seleccionar --</option>
+                <?php foreach ($estados as $id => $nombre): ?>
+                    <option value="<?php echo $id; ?>"><?php echo htmlspecialchars($nombre); ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="imagen">Foto de Perfil</label>
+        <input type="file" id="imagen" name="imagen" accept="image/*">
+    </div>
+
+    <div class="btn-group" style="margin-top: 2rem;">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <a href="/security/usuario" class="btn btn-secondary">Cancelar</a>
+    </div>
+</form>

@@ -1,0 +1,51 @@
+<div class="page-header">
+    <h2>Detalle del Usuario</h2>
+</div>
+
+<div style="max-width: 600px; background: white; padding: 2rem; border-radius: 4px;">
+    <?php if (!empty($usuario['imagen'])): ?>
+        <div style="margin-bottom: 1.5rem; text-align: center;">
+            <img src="/<?php echo htmlspecialchars($usuario['imagen']); ?>" alt="<?php echo htmlspecialchars($usuario['str_nombre_usuario']); ?>" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover;">
+        </div>
+    <?php endif; ?>
+
+    <div style="margin-bottom: 1.5rem;">
+        <strong style="color: #666;">ID:</strong>
+        <p><?php echo htmlspecialchars($usuario['id']); ?></p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <strong style="color: #666;">Usuario:</strong>
+        <p><?php echo htmlspecialchars($usuario['str_nombre_usuario']); ?></p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <strong style="color: #666;">Correo:</strong>
+        <p><?php echo htmlspecialchars($usuario['str_correo']); ?></p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <strong style="color: #666;">Celular:</strong>
+        <p><?php echo htmlspecialchars($usuario['str_numero_celular'] ?? 'No registrado'); ?></p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <strong style="color: #666;">Perfil:</strong>
+        <p><?php echo htmlspecialchars($usuario['str_nombre_perfil'] ?? 'Sin perfil'); ?></p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <strong style="color: #666;">Estado:</strong>
+        <p><?php echo htmlspecialchars($usuario['str_nombre'] ?? 'Desconocido'); ?></p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <strong style="color: #666;">Creado en:</strong>
+        <p><?php echo htmlspecialchars($usuario['creado_en'] ?? ''); ?></p>
+    </div>
+
+    <div class="btn-group">
+        <a href="/security/usuario-edit/<?php echo $usuario['id']; ?>" class="btn btn-primary">Editar</a>
+        <a href="/security/usuario" class="btn btn-secondary">Volver</a>
+    </div>
+</div>

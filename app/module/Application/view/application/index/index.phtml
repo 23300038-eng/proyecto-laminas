@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novafarma - Sistema Administrativo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .welcome-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            padding: 3rem;
+            text-align: center;
+        }
+
+        .welcome-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .welcome-container h1 {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .welcome-container p {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f8f8f8;
+            color: #333;
+            border: 2px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #f0f0f0;
+            border-color: #667eea;
+        }
+
+        .info-box {
+            background: #f5f5f5;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+            text-align: left;
+        }
+
+        .info-box h3 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .info-box ul {
+            list-style: none;
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .info-box li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .info-box li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            .welcome-container {
+                padding: 2rem;
+            }
+
+            .welcome-container h1 {
+                font-size: 2rem;
+            }
+
+            .btn-container {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-container">
+        <div class="welcome-icon">🏥</div>
+        <h1>Bienvenido a Novafarma</h1>
+        <p>Sistema Administrativo Integral para Farmacéuticas</p>
+
+        <div class="btn-container">
+            <a href="/auth/login" class="btn btn-primary">Iniciar Sesión</a>
+            <a href="/dashboard" class="btn btn-secondary">Ver Demo</a>
+        </div>
+
+        <div class="info-box">
+            <h3>Características del Sistema</h3>
+            <ul>
+                <li>Gestión de usuarios y perfiles</li>
+                <li>Control de permisos dinámico</li>
+                <li>Módulos personalizables</li>
+                <li>CRUDs completos con validación</li>
+                <li>Interfaz moderna y responsiva</li>
+                <li>Seguridad integrada</li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #eee; color: #999; font-size: 0.9rem;">
+            <p><strong>Credenciales de prueba:</strong><br>Usuario: <code style="background: #f0f0f0; padding: 0.2rem 0.5rem; border-radius: 3px;">admin</code> | Contraseña: <code style="background: #f0f0f0; padding: 0.2rem 0.5rem; border-radius: 3px;">admin123</code></p>
+        </div>
+    </div>
+</body>
+</html>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const form = document.getElementById("formulario");
+  const nombre = document.getElementById("nombre");
+  const telefono = document.getElementById("telefono");
+  const correo = document.getElementById("correo");
+
+  /* ========= KEYDOWN NOMBRE (SOLO LETRAS) ========= */
+  nombre.addEventListener("keydown", (e) => {
+    const key = e.keyCode;
+
+    if (
+      (key >= 65 && key <= 90) || // A-Z
+      (key >= 97 && key <= 122) || // a-z
+      key === 32 || // espacio
+      key === 8 // backspace
+    ) {
+      return;
+    }
+
+    e.preventDefault();
+  });
+
+  /* ========= KEYDOWN TELÉFONO (SOLO NÚMEROS, MAX 10) ========= */
+  telefono.addEventListener("keydown", (e) => {
+    const key = e.keyCode;
+
+    if (key === 8) return;
+
+    if (key < 48 || key > 57) {
+      e.preventDefault();
+      return;
+    }
+
+    if (telefono.value.length >= 10) {
+      e.preventDefault();
+    }
+  });
+
+  /* ========= VALIDACIÓN FORMULARIO ========= */
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const nombreValor = nombre.value.trim();
+    const telefonoValor = telefono.value.trim();
+    const correoValor = correo.value.trim();
+
+    /* ===== CAMPOS VACÍOS ===== */
+    if (nombreValor === "") {
+      alert("El nombre no puede estar vacío");
+      nombre.focus();
+      return;
+    }
+
+    if (telefonoValor === "") {
+      alert("El número de teléfono no puede estar vacío");
+      telefono.focus();
+      return;
+    }
+
+    if (correoValor === "") {
+      alert("El correo no puede estar vacío");
+      correo.focus();
+      return;
+    }
+
+    /* ===== TELÉFONO (10 DÍGITOS EXACTOS) ===== */
+    if (telefonoValor.length !== 10) {
+      alert("El número de teléfono debe tener exactamente 10 dígitos");
+      telefono.focus();
+      return;
+    }
+
+    /* ===== CORREO ===== */
+    const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!regexCorreo.test(correoValor)) {
+      alert("El correo es inválido");
+      correo.focus();
+      return;
+    }
+
+    /* ===== TODO CORRECTO ===== */
+    alert("Formulario válido");
+    form.reset();
+  });
+
+});
+</script>

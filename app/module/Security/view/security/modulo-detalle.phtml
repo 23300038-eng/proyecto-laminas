@@ -1,0 +1,40 @@
+<div class="page-header">
+    <h2>Detalle del Módulo</h2>
+</div>
+
+<div style="max-width: 600px; background: white; padding: 2rem; border-radius: 4px;">
+    <div style="margin-bottom: 1.5rem;">
+        <strong style="color: #666;">ID:</strong>
+        <p><?php echo htmlspecialchars($modulo['id']); ?></p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <strong style="color: #666;">Nombre:</strong>
+        <p><?php echo htmlspecialchars($modulo['str_nombre_modulo']); ?></p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <strong style="color: #666;">Icono:</strong>
+        <p><?php echo htmlspecialchars($modulo['str_icono'] ?? 'Sin icono'); ?></p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <strong style="color: #666;">Orden:</strong>
+        <p><?php echo htmlspecialchars($modulo['int_orden']); ?></p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <strong style="color: #666;">Activo:</strong>
+        <p><?php echo $modulo['bit_activo'] ? 'Sí' : 'No'; ?></p>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <strong style="color: #666;">Creado en:</strong>
+        <p><?php echo htmlspecialchars($modulo['creado_en'] ?? ''); ?></p>
+    </div>
+
+    <div class="btn-group">
+        <a href="/security/modulo-edit/<?php echo $modulo['id']; ?>" class="btn btn-primary">Editar</a>
+        <a href="/security/modulo" class="btn btn-secondary">Volver</a>
+    </div>
+</div>
