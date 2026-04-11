@@ -19,6 +19,14 @@ if (php_sapi_name() === 'cli-server') {
     unset($path);
 }
 
+    // Asegurar que el directorio de cache existe y es escribible en tiempo de ejecución
+    $runtimeCacheDir = dirname(__DIR__) . '/data/cache';
+    if (! is_dir($runtimeCacheDir)) {
+        @mkdir($runtimeCacheDir, 0777, true);
+    }
+    @chmod($runtimeCacheDir, 0777);
+
+
 // Composer autoloading
 require __DIR__ . '/../../vendor/autoload.php';
 
