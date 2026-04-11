@@ -22,9 +22,14 @@ COPY . /var/www/html
 RUN mkdir -p /var/www/html/public/uploads/usuarios \
     && mkdir -p /var/www/html/public/uploads/carrusel \
     && mkdir -p /var/www/html/app/data/cache \
+    && mkdir -p /var/run/php-fpm \
+    && mkdir -p /var/log \
     && chown -R www-data:www-data /var/www/html \
+    && chown -R www-data:www-data /var/run/php-fpm \
     && chmod -R 777 /var/www/html/app/data \
-    && chmod -R 777 /var/www/html/public/uploads
+    && chmod -R 777 /var/www/html/public/uploads \
+    && touch /var/log/php-fpm.log \
+    && chown www-data:www-data /var/log/php-fpm.log
 
 WORKDIR /var/www/html/app
 
