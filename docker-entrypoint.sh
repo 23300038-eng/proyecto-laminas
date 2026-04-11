@@ -9,21 +9,13 @@ chown www-data:www-data /var/run/php-fpm
 
 echo "✓ PostgreSQL config detected"
 
-# Limpiar caché (no falla el contenedor si hay error)
-echo "Limpiando caché de configuración..."
-if [ -f ./app/public/index.php ]; then
-    php ./app/public/index.php --clear-config-cache 2>/dev/null || true
-else
-    echo "Advertencia: No se encontró app/public/index.php"
-fi
-
 # Iniciar PHP-FPM
 echo "Starting PHP-FPM..."
 php-fpm -D
 
 # Esperar socket
 echo "Waiting for PHP-FPM socket..."
-timeout=20
+timeout=15
 while [ ! -S /var/run/php-fpm.sock ] && [ $timeout -gt 0 ]; do
     sleep 1
     timeout=$((timeout-1))
