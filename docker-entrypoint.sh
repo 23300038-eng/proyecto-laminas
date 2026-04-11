@@ -11,6 +11,8 @@ chown -R www-data:www-data /var/run/php-fpm /var/www/html
 mkdir -p /var/www/html/data/cache
 chown -R www-data:www-data /var/www/html/data
 chmod -R 0755 /var/www/html/data
+# Asegurar escritura amplia por si el runtime usa otro usuario en Railway
+chmod -R 0777 /var/www/html/data/cache || true
 
 echo "✓ PostgreSQL config detected"
 
