@@ -1,6 +1,6 @@
 FROM php:8.2-fpm
 
-# Instalar dependencias + Nginx
+# Instalar Nginx y extensiones necesarias
 RUN apt-get update && apt-get install -y \
     nginx \
     libpq-dev \
@@ -17,23 +17,27 @@ RUN apt-get update && apt-get install -y \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
+
+# Copiar todo el proyecto
 COPY . .
 
-# Instalar dependencias
+# Instalar dependencias de PHP (sin dev)
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Copiar configuraciones
 COPY nginx.conf /etc/nginx/nginx.conf
-COPY php-fpm.conf /usr/local/etc/php-fpm.d/www.conf   # ← importante
 
-# Permisos
-RUN chown -R www-data:www-data /var/www/html \
-    && mkdir -p /var/run/php-fpm \
-    && chown www-data:www-data /var/run/php-fpm
+# Copiar php-fpm.conf (nombre correcto de tu archivo)
+COPY php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
+
+# Crear directorios y permisos
+RUN mkdir -p /var/run/php-fpm \
+    && chown -R www-data:www-data /var/www/html \
+    && chown -R www-data:www-data /var/run/php-fpm
 
 EXPOSE 80
 
-# Usar tu entrypoint
+# Copiar y dar permisos al entrypoint
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
