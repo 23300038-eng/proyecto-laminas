@@ -16,6 +16,13 @@ echo "Creating directories..."
 mkdir -p /var/www/html/public/uploads/usuarios
 mkdir -p /var/www/html/public/uploads/carrusel
 mkdir -p /var/www/html/app/data/cache
+mkdir -p /var/log/nginx
+mkdir -p /var/log/php-fpm
+
+# Crear archivos de log
+touch /var/log/nginx/access.log
+touch /var/log/nginx/error.log
+touch /var/log/php-fpm.log
 
 # Fijar permisos
 echo "Setting permissions..."
