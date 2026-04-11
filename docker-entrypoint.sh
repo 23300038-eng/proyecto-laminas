@@ -7,6 +7,11 @@ echo "=== Starting Novafarma ==="
 mkdir -p /var/run/php-fpm
 chown -R www-data:www-data /var/run/php-fpm /var/www/html
 
+# Asegurar que el directorio de caché existe y es escribible
+mkdir -p /var/www/html/data/cache
+chown -R www-data:www-data /var/www/html/data
+chmod -R 0755 /var/www/html/data
+
 echo "✓ PostgreSQL config detected"
 
 # Iniciar PHP-FPM

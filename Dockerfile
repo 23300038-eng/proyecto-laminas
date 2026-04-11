@@ -26,6 +26,9 @@ COPY php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
 RUN mkdir -p /var/run/php-fpm \
     && chown -R www-data:www-data /var/www/html \
     && chown -R www-data:www-data /var/run/php-fpm
+    && mkdir -p /var/www/html/data/cache \
+    && chown -R www-data:www-data /var/www/html/data \
+    && chmod -R 0755 /var/www/html/data
 
 EXPOSE 80
 
