@@ -37,14 +37,6 @@ if [ ! -f /var/www/html/app/vendor/autoload.php ]; then
 fi
 echo "✓ Composer autoloader found"
 
-# Crear directorio para socket
-mkdir -p /var/run/php-fpm
-chown www-data:www-data /var/run/php-fpm || true
-
-# Crear log files para PHP-FPM
-touch /var/log/php-fpm.log || true
-chown www-data:www-data /var/log/php-fpm.log || true
-
 # Verificar conexión a PostgreSQL si está configurado
 if [ ! -z "$PGHOST" ] && [ ! -z "$PGUSER" ]; then
     echo "Verifying PostgreSQL connection..."
@@ -70,30 +62,17 @@ fi
 
 # Iniciar PHP-FPM en background
 echo "Starting PHP-FPM..."
-php-fpm -D
+php-fpm &
+FPM_PID=$!
+sleep 2
 
-# Esperar a que el socket de PHP-FPM esté disponible
-echo "Waiting for PHP-FPM socket..."
-SOCKET_WAIT=0
-MAX_SOCKET_WAIT=30
-
-while [ ! -S /var/run/php-fpm.sock ] && [ $SOCKET_WAIT -lt $MAX_SOCKET_WAIT ]; do
-    echo "Waiting for PHP-FPM socket... ($SOCKET_WAIT/$MAX_SOCKET_WAIT)"
-    sleep 1
-    SOCKET_WAIT=$((SOCKET_WAIT + 1))
-done
-
-if [ ! -S /var/run/php-fpm.sock ]; then
-    echo "ERROR: PHP-FPM socket not created after $MAX_SOCKET_WAIT seconds!"
-    echo "Checking PHP-FPM status:"
-    ps aux | grep php-fpm || true
-    echo "Checking logs:"
-    tail -20 /var/log/php-fpm.log || true
+# Verificar que PHP-FPM está corriendo
+if ! kill -0 $FPM_PID 2>/dev/null; then
+    echo "ERROR: PHP-FPM failed to start!"
     exit 1
 fi
 
-echo "PHP-FPM socket is available"
-ls -la /var/run/php-fpm.sock
+echo "PHP-FPM started with PID $FPM_PID"
 
 # Verificar configuración de Nginx
 echo "Verifying Nginx configuration..."
