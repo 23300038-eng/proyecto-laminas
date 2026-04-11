@@ -3,6 +3,9 @@
 -- Sistema administrativo para farmacéutica con gestión de permisos dinámicos
 -- ============================================================================
 
+-- Instalar extensiones requeridas
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- Tablas de soporte
 CREATE TABLE IF NOT EXISTS estado_usuario (
     id SERIAL PRIMARY KEY,
