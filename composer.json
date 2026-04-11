@@ -1,5 +1,20 @@
 {
+    "name": "novafarma/proyecto-laminas",
     "require": {
-        "laminas/laminas-captcha": "^2.5"
+        "php": "^8.2",
+        "laminas/laminas-mvc": "^3.7",
+        "laminas/laminas-captcha": "^2.5",
+        "laminas/laminas-db": "^2.13",
+        "laminas/laminas-log": "^2.17",
+        "laminas/laminas-config": "^3.9",
+        "laminas/laminas-servicemanager": "^3.17",
+        "laminas/laminas-eventmanager": "^3.13",
+        "laminas/laminas-stdlib": "^3.19",
+        "laminas/laminas-view": "^2.27"
+    },
+    "autoload": {
+        "psr-4": {
+            "Application\\": "app/src/"
+        }
     }
 }
