@@ -18,13 +18,13 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Copiar el proyecto
 COPY . /var/www/html
 
-# Crear directorios necesarios
+# Crear directorios necesarios con permisos amplios
 RUN mkdir -p /var/www/html/public/uploads/usuarios \
     && mkdir -p /var/www/html/public/uploads/carrusel \
     && mkdir -p /var/www/html/app/data/cache \
     && chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 /var/www/html/public/uploads \
-    && chmod -R 775 /var/www/html/app/data/cache
+    && chmod -R 777 /var/www/html/app/data \
+    && chmod -R 777 /var/www/html/public/uploads
 
 WORKDIR /var/www/html/app
 
