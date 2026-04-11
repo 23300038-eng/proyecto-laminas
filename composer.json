@@ -14,7 +14,10 @@
     },
     "autoload": {
         "psr-4": {
-            "Application\\": "app/src/"
+            "Application\\": "app/module/Application/src/",
+            "Auth\\": "app/module/Auth/src/",
+            "Security\\": "app/module/Security/src/",
+            "Dashboard\\": "app/module/Dashboard/src/"
         }
     }
 }
