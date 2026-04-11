@@ -1,51 +1,40 @@
 FROM php:8.2-fpm
 
-# Instalar dependencias del sistema
+# Instalar dependencias + Nginx
 RUN apt-get update && apt-get install -y \
     nginx \
-    git \
-    unzip \
-    libzip-dev \
     libpq-dev \
-    postgresql-client \
-    && docker-php-ext-install zip \
+    libzip-dev \
+    zip \
+    unzip \
+    git \
+    curl \
     && docker-php-ext-install pdo_pgsql \
+    && docker-php-ext-enable pdo_pgsql \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copiar el proyecto
-COPY . /var/www/html
+WORKDIR /var/www/html
+COPY . .
 
-# Crear directorios necesarios con permisos amplios
-RUN mkdir -p /var/www/html/public/uploads/usuarios \
-    && mkdir -p /var/www/html/public/uploads/carrusel \
-    && mkdir -p /var/www/html/app/data/cache \
-    && mkdir -p /var/run/php-fpm \
-    && mkdir -p /var/log \
-    && chown -R www-data:www-data /var/www/html \
-    && chown -R www-data:www-data /var/run/php-fpm \
-    && chmod -R 777 /var/www/html/app/data \
-    && chmod -R 777 /var/www/html/public/uploads \
-    && touch /var/log/php-fpm.log \
-    && chown www-data:www-data /var/log/php-fpm.log
+# Instalar dependencias
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-WORKDIR /var/www/html/app
-
-# Instalar dependencias de Laminas
-RUN composer install --no-dev --optimize-autoloader
-
-# Copiar configuración de nginx
+# Copiar configuraciones
 COPY nginx.conf /etc/nginx/nginx.conf
+COPY php-fpm.conf /usr/local/etc/php-fpm.d/www.conf   # ← importante
 
-# Copiar configuración de PHP-FPM
-COPY php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
+# Permisos
+RUN chown -R www-data:www-data /var/www/html \
+    && mkdir -p /var/run/php-fpm \
+    && chown www-data:www-data /var/run/php-fpm
 
-# Copiar script de inicio
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+EXPOSE 80
 
-EXPOSE 8080
+# Usar tu entrypoint
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["/usr/local/bin/docker-entrypoint.sh"]
