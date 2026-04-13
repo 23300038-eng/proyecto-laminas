@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Novafarma - Sistema Administrativo</title>
 
-    <?= $this->headLink()
-        ->appendStylesheet($this->basePath('css/bootstrap.min.css'))
-        ->appendStylesheet($this->basePath('css/style.css'))
-        ->appendStylesheet($this->basePath('css/theme.css')) ?>
-    <?= $this->headScript() ?>
+    <link rel="stylesheet" href="<?= $this->basePath() ?>/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?= $this->basePath() ?>/css/style.css">
+    <link rel="stylesheet" href="<?= $this->basePath() ?>/css/theme.css">
 </head>
 <body>
     <header class="header">

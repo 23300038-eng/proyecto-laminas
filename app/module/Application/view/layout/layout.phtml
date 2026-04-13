@@ -12,11 +12,9 @@
     <title>Novafarma - Sistema Administrativo</title>
     <?= $this->headMeta()->appendName('viewport','width=device-width, initial-scale=1.0') ?>
 
-    <?= $this->headLink()
-        ->appendStylesheet($this->basePath('css/bootstrap.min.css'))
-        ->appendStylesheet($this->basePath('css/style.css'))
-        ->appendStylesheet($this->basePath('css/theme.css')) ?>
-    <?= $this->headScript() ?>
+    <link rel="stylesheet" href="<?= $this->basePath() ?>/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?= $this->basePath() ?>/css/style.css">
+    <link rel="stylesheet" href="<?= $this->basePath() ?>/css/theme.css">
     <script>var basePath = '<?= $this->basePath() ?>';</script>
 </head>
 <body>
