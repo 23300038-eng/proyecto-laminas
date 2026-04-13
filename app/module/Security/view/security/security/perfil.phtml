@@ -1,0 +1,61 @@
+<div class="page-header">
+	<h2>Gestión de Perfiles</h2>
+	<a href="/security/perfil-add" class="btn btn-primary">+ Crear Perfil</a>
+</div>
+
+<table class="table">
+	<thead>
+		<tr>
+			<th>ID</th>
+			<th>Nombre</th>
+			<th>Administrador</th>
+			<th>Descripción</th>
+			<th>Acciones</th>
+		</tr>
+	</thead>
+	<tbody>
+		<?php if (count($perfiles) > 0): ?>
+			<?php foreach ($perfiles as $perfil): ?>
+				<tr>
+					<td><?php echo htmlspecialchars($perfil['id']); ?></td>
+					<td><?php echo htmlspecialchars($perfil['str_nombre_perfil']); ?></td>
+					<td><?php echo $perfil['bit_administrador'] ? 'Sí' : 'No'; ?></td>
+					<td><?php echo htmlspecialchars(substr($perfil['descripcion'] ?? '', 0, 50)) . (strlen($perfil['descripcion'] ?? '') > 50 ? '...' : ''); ?></td>
+					<td>
+						<div class="btn-group">
+							<a href="/security/perfil-detalle/<?php echo $perfil['id']; ?>" class="btn btn-secondary" title="Ver">👁️</a>
+							<a href="/security/perfil-edit/<?php echo $perfil['id']; ?>" class="btn btn-secondary" title="Editar">✏️</a>
+							<a href="/security/perfil-delete/<?php echo $perfil['id']; ?>" class="btn btn-danger" title="Eliminar" onclick="return confirm('¿Está seguro?')">🗑️</a>
+						</div>
+					</td>
+				</tr>
+			<?php endforeach; ?>
+		<?php else: ?>
+			<tr>
+				<td colspan="5" style="text-align: center; padding: 2rem;">No hay perfiles registrados</td>
+			</tr>
+		<?php endif; ?>
+	</tbody>
+</table>
+
+<?php if ($pages > 1): ?>
+	<div class="pagination">
+		<?php if ($page > 1): ?>
+			<a href="?page=1">« Primera</a>
+			<a href="?page=<?php echo $page - 1; ?>">‹ Anterior</a>
+		<?php endif; ?>
+
+		<?php for ($i = 1; $i <= $pages; $i++): ?>
+			<?php if ($i === $page): ?>
+				<span class="active"><?php echo $i; ?></span>
+			<?php else: ?>
+				<a href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+			<?php endif; ?>
+		<?php endfor; ?>
+
+		<?php if ($page < $pages): ?>
+			<a href="?page=<?php echo $page + 1; ?>">Siguiente ›</a>
+			<a href="?page=<?php echo $pages; ?>">Última »</a>
+		<?php endif; ?>
+	</div>
+<?php endif; ?>
