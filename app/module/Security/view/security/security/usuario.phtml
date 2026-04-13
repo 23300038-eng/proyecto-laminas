@@ -1,26 +1,24 @@
+<?php
+$esAdmin = !empty($_SESSION['bit_administrador'] ?? false);
+$p = $permisos_modulo ?? ['agregar'=>$esAdmin,'editar'=>$esAdmin,'consulta'=>$esAdmin,'eliminar'=>$esAdmin,'detalle'=>$esAdmin];
+?>
 <nav class="breadcrumbs">
     <a href="<?= $this->url('dashboard', ['action'=>'index']) ?>">Dashboard</a>
     <span>/</span>
-    <a href="<?= $this->url('security', ['action'=>'perfil']) ?>">Administración</a>
+    <span>Seguridad</span>
     <span>/</span>
     <span>Usuarios</span>
 </nav>
 
 <div class="page-header">
     <h2>Gestión de Usuarios</h2>
-    <a href="<?= $this->url('security', ['action'=>'usuario-add']) ?>" class="btn btn-primary">+ Crear Usuario</a>
+    <?php if ($p['agregar']): ?>
+        <a href="<?= $this->url('security', ['action'=>'usuario-add']) ?>" class="btn btn-primary">+ Crear Usuario</a>
+    <?php endif; ?>
 </div>
 
-<?php if (!empty($success)): ?>
-    <div class="alert alert-success">
-        <?php echo htmlspecialchars($success); ?>
-    </div>
-<?php endif; ?>
-
 <?php if (!empty($error)): ?>
-    <div class="alert alert-error">
-        <?php echo htmlspecialchars($error); ?>
-    </div>
+    <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
 <?php endif; ?>
 
 <div class="table-container">
@@ -28,44 +26,57 @@
         <thead>
             <tr>
                 <th>ID</th>
+                <th>Imagen</th>
                 <th>Usuario</th>
                 <th>Correo</th>
                 <th>Perfil</th>
                 <th>Estado</th>
-                <th style="text-align: center;">Acciones</th>
+                <?php if ($p['detalle'] || $p['editar'] || $p['eliminar']): ?>
+                    <th style="text-align:center">Acciones</th>
+                <?php endif; ?>
             </tr>
         </thead>
         <tbody>
-            <?php if (!empty($usuarios) && count($usuarios) > 0): ?>
+            <?php if (!empty($usuarios)): ?>
                 <?php foreach ($usuarios as $usuario): ?>
                     <tr>
-                        <td><strong><?php echo htmlspecialchars($usuario['id']); ?></strong></td>
-                        <td><?php echo htmlspecialchars($usuario['str_nombre_usuario']); ?></td>
-                        <td><?php echo htmlspecialchars($usuario['str_correo']); ?></td>
-                        <td><?php echo htmlspecialchars($usuario['str_nombre_perfil'] ?? 'N/A'); ?></td>
+                        <td><strong><?= htmlspecialchars($usuario['id']) ?></strong></td>
                         <td>
-                            <?php $estado = htmlspecialchars($usuario['str_nombre'] ?? ''); ?>
-                            <?php if (stripos($estado, 'activo') !== false): ?>
-                                <span class="badge badge-success"><?php echo $estado; ?></span>
+                            <?php if (!empty($usuario['imagen'])): ?>
+                                <img src="/<?= htmlspecialchars($usuario['imagen']) ?>" alt="Avatar" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
                             <?php else: ?>
-                                <span class="badge badge-secondary"><?php echo $estado; ?></span>
+                                <div style="width:36px;height:36px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:14px;color:#6b7280;">👤</div>
                             <?php endif; ?>
                         </td>
-                        <td style="text-align: center;">
-                            <div class="btn-group">
-                                <a href="<?= $this->url('security', ['action'=>'usuario-detalle', 'id'=>$usuario['id']]) ?>" class="btn btn-sm btn-secondary" title="Ver detalles">Ver</a>
-                                <a href="<?= $this->url('security', ['action'=>'usuario-edit', 'id'=>$usuario['id']]) ?>" class="btn btn-sm btn-secondary" title="Editar">Editar</a>
-                                <a href="<?= $this->url('security', ['action'=>'usuario', 'delete'=>$usuario['id']]) ?>" class="btn btn-sm btn-danger" title="Eliminar" onclick="return confirm('¿Está seguro que desea eliminar este usuario?')">Eliminar</a>
-                            </div>
+                        <td><?= htmlspecialchars($usuario['str_nombre_usuario']) ?></td>
+                        <td><?= htmlspecialchars($usuario['str_correo']) ?></td>
+                        <td><?= htmlspecialchars($usuario['str_nombre_perfil'] ?? '-') ?></td>
+                        <td>
+                            <?php if ((int)$usuario['id_estado_usuario'] === 1): ?>
+                                <span class="badge badge-success">Activo</span>
+                            <?php else: ?>
+                                <span class="badge badge-danger">Inactivo</span>
+                            <?php endif; ?>
                         </td>
+                        <?php if ($p['detalle'] || $p['editar'] || $p['eliminar']): ?>
+                            <td style="text-align:center">
+                                <div class="btn-group">
+                                    <?php if ($p['detalle']): ?>
+                                        <a href="<?= $this->url('security', ['action'=>'usuario-detalle','id'=>$usuario['id']]) ?>" class="btn btn-sm btn-secondary">Ver</a>
+                                    <?php endif; ?>
+                                    <?php if ($p['editar']): ?>
+                                        <a href="<?= $this->url('security', ['action'=>'usuario-edit','id'=>$usuario['id']]) ?>" class="btn btn-sm btn-secondary">Editar</a>
+                                    <?php endif; ?>
+                                    <?php if ($p['eliminar']): ?>
+                                        <a href="<?= $this->url('security', ['action'=>'usuario-delete','id'=>$usuario['id']]) ?>" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar este usuario?')">Eliminar</a>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                        <?php endif; ?>
                     </tr>
                 <?php endforeach; ?>
             <?php else: ?>
-                <tr>
-                    <td colspan="6" class="empty-state">
-                        <p>No hay usuarios registrados en el sistema.</p>
-                    </td>
-                </tr>
+                <tr><td colspan="7" class="empty-state"><p>No hay usuarios registrados.</p></td></tr>
             <?php endif; ?>
         </tbody>
     </table>
@@ -74,21 +85,19 @@
 <?php if (!empty($pages) && $pages > 1): ?>
     <div class="pagination">
         <?php if ($page > 1): ?>
-            <a href="?page=1" title="Primera página">« Primera</a>
-            <a href="?page=<?php echo $page - 1; ?>" title="Página anterior">‹ Anterior</a>
+            <a href="?page=1">« Primera</a>
+            <a href="?page=<?= $page - 1 ?>">‹ Anterior</a>
         <?php endif; ?>
-
         <?php for ($i = 1; $i <= $pages; $i++): ?>
             <?php if ($i === $page): ?>
-                <span class="pagination-current"><?php echo $i; ?></span>
+                <span class="pagination-current"><?= $i ?></span>
             <?php else: ?>
-                <a href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                <a href="?page=<?= $i ?>"><?= $i ?></a>
             <?php endif; ?>
         <?php endfor; ?>
-
         <?php if ($page < $pages): ?>
-            <a href="?page=<?php echo $page + 1; ?>" title="Siguiente página">Siguiente ›</a>
-            <a href="?page=<?php echo $pages; ?>" title="Última página">Última »</a>
+            <a href="?page=<?= $page + 1 ?>">Siguiente ›</a>
+            <a href="?page=<?= $pages ?>">Última »</a>
         <?php endif; ?>
     </div>
 <?php endif; ?>

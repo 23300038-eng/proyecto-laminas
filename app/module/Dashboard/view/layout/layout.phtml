@@ -214,7 +214,7 @@
                         if (session_status() === PHP_SESSION_NONE) session_start();
                         echo htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Usuario'); 
                     ?></span>
-                    <span class="navbar-user-role"><?= htmlspecialchars($_SESSION['usuario_rol'] ?? 'Usuario') ?></span>
+                    <span class="navbar-user-role"><?= htmlspecialchars($_SESSION['perfil_nombre'] ?? 'Usuario') ?></span>
                 </div>
                 <a href="<?= $this->url('auth', ['action'=>'logout']) ?>" class="navbar-logout">Salir</a>
             </div>

@@ -5,175 +5,115 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Novafarma - Acceso al Sistema</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            height: 100%;
-            width: 100%;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f0f4f8;
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
             padding: 20px;
         }
-
-        .login-wrapper {
-            width: 100%;
-            max-width: 450px;
-        }
-
+        .login-wrapper { width: 100%; max-width: 420px; }
         .login-card {
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.10);
             overflow: hidden;
         }
-
         .login-header {
-            background: linear-gradient(135deg, #0066cc 0%, #004a99 100%);
+            background: #0055b3;
             color: white;
-            padding: 3rem 2rem;
+            padding: 2.5rem 2rem;
             text-align: center;
         }
-
-        .login-header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.5px;
-        }
-
-        .login-header p {
-            font-size: 0.95rem;
-            opacity: 0.9;
-            font-weight: 300;
-        }
-
-        .login-content {
-            padding: 2.5rem 2rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group:last-of-type {
-            margin-bottom: 2rem;
-        }
-
+        .login-header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 4px; letter-spacing: 1px; }
+        .login-header p { font-size: 0.88rem; opacity: 0.85; font-weight: 300; }
+        .login-content { padding: 2rem; }
+        .form-group { margin-bottom: 1.25rem; }
         .form-group label {
             display: block;
-            margin-bottom: 0.6rem;
+            margin-bottom: 6px;
             font-weight: 500;
-            color: #333;
-            font-size: 0.95rem;
+            color: #374151;
+            font-size: 0.9rem;
         }
-
-        .form-group input {
+        .form-group input[type="text"],
+        .form-group input[type="password"],
+        .form-group input[type="number"] {
             width: 100%;
-            padding: 0.875rem 1rem;
-            border: 1px solid #ddd;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
             border-radius: 6px;
-            font-size: 1rem;
-            font-family: inherit;
-            transition: all 0.3s ease;
-            background-color: #f8f9fa;
+            font-size: 0.95rem;
+            background: #f9fafb;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-
         .form-group input:focus {
             outline: none;
-            border-color: #0066cc;
-            background-color: #fff;
-            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+            border-color: #0055b3;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(0,85,179,0.10);
         }
-
-        .form-group input::placeholder {
-            color: #999;
+        .captcha-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-
-        .alert {
-            padding: 1rem;
-            margin-bottom: 1.5rem;
+        .captcha-question {
+            background: #f0f4f8;
+            border: 1px solid #d1d5db;
             border-radius: 6px;
-            background-color: #ffebee;
-            color: #c62828;
-            border-left: 4px solid #d32f2f;
-            font-size: 0.9rem;
-            animation: slideDown 0.3s ease;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0055b3;
+            white-space: nowrap;
+            min-width: 110px;
+            text-align: center;
         }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .captcha-row input[type="number"] {
+            flex: 1;
+            max-width: 100px;
         }
-
+        .alert {
+            padding: 0.85rem 1rem;
+            margin-bottom: 1.25rem;
+            border-radius: 6px;
+            background: #fef2f2;
+            color: #b91c1c;
+            border-left: 4px solid #dc2626;
+            font-size: 0.88rem;
+        }
         .btn-login {
             width: 100%;
-            padding: 1rem;
-            background: linear-gradient(135deg, #0066cc 0%, #004a99 100%);
+            padding: 0.85rem;
+            background: #0055b3;
             color: white;
             border: none;
             border-radius: 6px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 102, 204, 0.3);
+            margin-top: 0.5rem;
+            transition: background 0.2s, transform 0.1s;
+            letter-spacing: 0.3px;
         }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 102, 204, 0.4);
-        }
-
-        .btn-login:active {
-            transform: translateY(0);
-        }
-
+        .btn-login:hover { background: #003d85; transform: translateY(-1px); }
+        .btn-login:active { transform: none; }
         .login-footer {
             text-align: center;
-            padding: 1.5rem 2rem;
-            background-color: #f8f9fa;
-            border-top: 1px solid #e0e0e0;
-            color: #666;
-            font-size: 0.85rem;
+            padding: 1.25rem 2rem;
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            color: #9ca3af;
+            font-size: 0.8rem;
         }
-
-        .login-footer p {
-            margin: 0;
-        }
-
         @media (max-width: 480px) {
-            .login-header {
-                padding: 2rem 1.5rem;
-            }
-
-            .login-header h1 {
-                font-size: 2rem;
-            }
-
-            .login-content {
-                padding: 1.75rem 1.5rem;
-            }
-
-            .login-footer {
-                padding: 1.25rem 1.5rem;
-            }
+            .login-header { padding: 2rem 1.5rem; }
+            .login-content { padding: 1.5rem; }
         }
     </style>
 </head>
@@ -184,33 +124,40 @@
                 <h1>Novafarma</h1>
                 <p>Sistema de Gestión Administrativa</p>
             </div>
-
             <div class="login-content">
                 <?php if (!empty($error)): ?>
-                    <div class="alert">
-                        <?php echo htmlspecialchars($error); ?>
-                    </div>
+                    <div class="alert"><?= htmlspecialchars($error) ?></div>
                 <?php endif; ?>
 
-                <form method="POST" action="">
+                <form method="POST" action="" autocomplete="off">
                     <div class="form-group">
                         <label for="username">Usuario</label>
-                        <input type="text" id="username" name="username" required autofocus 
+                        <input type="text" id="username" name="username" required autofocus
                                placeholder="Ingrese su usuario">
                     </div>
 
                     <div class="form-group">
                         <label for="password">Contraseña</label>
-                        <input type="password" id="password" name="password" required 
+                        <input type="password" id="password" name="password" required
                                placeholder="Ingrese su contraseña">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Verificación CAPTCHA</label>
+                        <div class="captcha-row">
+                            <div class="captcha-question">
+                                <?= (int)$captcha_n1 ?> + <?= (int)$captcha_n2 ?> = ?
+                            </div>
+                            <input type="number" name="captcha" id="captcha" required
+                                   placeholder="Resultado" min="0" max="18">
+                        </div>
                     </div>
 
                     <button type="submit" class="btn-login">Iniciar Sesión</button>
                 </form>
             </div>
-
             <div class="login-footer">
-                <p>&copy; <?= date('Y') ?> Novafarma. Todos los derechos reservados.</p>
+                &copy; <?= date('Y') ?> Novafarma &mdash; Todos los derechos reservados.
             </div>
         </div>
     </div>
