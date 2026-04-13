@@ -482,16 +482,23 @@ class SecurityController extends AbstractActionController
             $files = $request->getFiles();
             if ($files->get('imagen')) {
                 $file = $files->get('imagen');
-                $uploadDir = 'public/uploads/usuarios/';
                 
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
-                }
+                // Verificar que sea un objeto válido de UploadedFile
+                if (is_object($file) && method_exists($file, 'getClientFilename')) {
+                    $uploadDir = 'public/uploads/usuarios/';
+                    
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0777, true);
+                    }
 
-                $ext = pathinfo($file->getClientFilename(), PATHINFO_EXTENSION);
-                $nombre = uniqid('user_') . '.' . $ext;
-                $file->moveTo($uploadDir . $nombre);
-                $data['imagen'] = 'uploads/usuarios/' . $nombre;
+                    $filename = $file->getClientFilename();
+                    if (!empty($filename)) {
+                        $ext = pathinfo($filename, PATHINFO_EXTENSION);
+                        $nombre = uniqid('user_') . '.' . $ext;
+                        $file->moveTo($uploadDir . $nombre);
+                        $data['imagen'] = 'uploads/usuarios/' . $nombre;
+                    }
+                }
             }
 
             $this->usuarioModel->createUsuario($data);
@@ -547,16 +554,23 @@ class SecurityController extends AbstractActionController
             $files = $request->getFiles();
             if ($files->get('imagen')) {
                 $file = $files->get('imagen');
-                $uploadDir = 'public/uploads/usuarios/';
                 
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
-                }
+                // Verificar que sea un objeto válido de UploadedFile
+                if (is_object($file) && method_exists($file, 'getClientFilename')) {
+                    $uploadDir = 'public/uploads/usuarios/';
+                    
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0777, true);
+                    }
 
-                $ext = pathinfo($file->getClientFilename(), PATHINFO_EXTENSION);
-                $nombre = uniqid('user_') . '.' . $ext;
-                $file->moveTo($uploadDir . $nombre);
-                $data['imagen'] = 'uploads/usuarios/' . $nombre;
+                    $filename = $file->getClientFilename();
+                    if (!empty($filename)) {
+                        $ext = pathinfo($filename, PATHINFO_EXTENSION);
+                        $nombre = uniqid('user_') . '.' . $ext;
+                        $file->moveTo($uploadDir . $nombre);
+                        $data['imagen'] = 'uploads/usuarios/' . $nombre;
+                    }
+                }
             }
 
             $this->usuarioModel->updateUsuario($id, $data);
