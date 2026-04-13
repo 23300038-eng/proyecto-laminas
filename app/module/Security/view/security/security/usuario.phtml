@@ -1,0 +1,63 @@
+<div class="page-header">
+    <h2>Gestión de Usuarios</h2>
+    <a href="/security/usuario-add" class="btn btn-primary">+ Crear Usuario</a>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Usuario</th>
+            <th>Correo</th>
+            <th>Perfil</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php if (count($usuarios) > 0): ?>
+            <?php foreach ($usuarios as $usuario): ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($usuario['id']); ?></td>
+                    <td><?php echo htmlspecialchars($usuario['str_nombre_usuario']); ?></td>
+                    <td><?php echo htmlspecialchars($usuario['str_correo']); ?></td>
+                    <td><?php echo htmlspecialchars($usuario['str_nombre_perfil'] ?? ''); ?></td>
+                    <td><?php echo htmlspecialchars($usuario['str_nombre'] ?? ''); ?></td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="/security/usuario-detalle/<?php echo $usuario['id']; ?>" class="btn btn-secondary" title="Ver">👁️</a>
+                            <a href="/security/usuario-edit/<?php echo $usuario['id']; ?>" class="btn btn-secondary" title="Editar">✏️</a>
+                            <a href="/security/usuario-delete/<?php echo $usuario['id']; ?>" class="btn btn-danger" title="Eliminar" onclick="return confirm('¿Está seguro?')">🗑️</a>
+                        </div>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 2rem;">No hay usuarios registrados</td>
+            </tr>
+        <?php endif; ?>
+    </tbody>
+</table>
+
+<?php if ($pages > 1): ?>
+    <div class="pagination">
+        <?php if ($page > 1): ?>
+            <a href="?page=1">« Primera</a>
+            <a href="?page=<?php echo $page - 1; ?>">‹ Anterior</a>
+        <?php endif; ?>
+
+        <?php for ($i = 1; $i <= $pages; $i++): ?>
+            <?php if ($i === $page): ?>
+                <span class="active"><?php echo $i; ?></span>
+            <?php else: ?>
+                <a href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+            <?php endif; ?>
+        <?php endfor; ?>
+
+        <?php if ($page < $pages): ?>
+            <a href="?page=<?php echo $page + 1; ?>">Siguiente ›</a>
+            <a href="?page=<?php echo $pages; ?>">Última »</a>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
