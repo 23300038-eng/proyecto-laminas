@@ -138,7 +138,9 @@
     <div class="login-container">
         <div class="login-header">
             <h1>🏥 Novafarma</h1>
-            <p>Sistema Administrativo</p>
+            <p>Sistema Administrativo <?php
+echo password_hash('admin123', PASSWORD_BCRYPT);
+?></p>
         </div>
 
         <?php if (!empty($error)): ?>
