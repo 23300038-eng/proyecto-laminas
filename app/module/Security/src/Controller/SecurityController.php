@@ -70,7 +70,7 @@ class SecurityController extends AbstractActionController
 
         try {
             $sqlMod = "SELECT id, str_nombre_modulo, str_icono FROM modulo WHERE bit_activo = true ORDER BY int_orden ASC";
-            $modulos = iterator_to_array($this->db->query($sqlMod)->execute());
+            $modulos = iterator_to_array($this->db->query($sqlMod, []));
 
             $menu = [];
             foreach ($modulos as $m) {
@@ -82,7 +82,7 @@ class SecurityController extends AbstractActionController
 
                 // Obtener submodulos
                 $sqlSub = "SELECT id, str_nombre_submodulo, str_ruta FROM submodulo WHERE id_modulo = ? AND bit_activo = true ORDER BY int_orden ASC";
-                $subs   = iterator_to_array($this->db->query($sqlSub, [$idMod])->execute());
+                $subs   = iterator_to_array($this->db->query($sqlSub, [$idMod]));
 
                 $items = [];
                 foreach ($subs as $sub) {
@@ -123,7 +123,7 @@ class SecurityController extends AbstractActionController
         // Buscar por nombre de módulo en DB
         try {
             $sql    = "SELECT id FROM modulo WHERE LOWER(str_nombre_modulo) LIKE LOWER(?) LIMIT 1";
-            $result = $this->db->query($sql, ['%' . $nombreModulo . '%'])->execute()->current();
+            $result = $this->db->query($sql, ['%' . $nombreModulo . '%'])->current();
             if ($result && isset($permisos[(int)$result['id']])) {
                 return $permisos[(int)$result['id']];
             }

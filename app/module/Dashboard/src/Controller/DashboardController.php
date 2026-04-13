@@ -55,7 +55,7 @@ class DashboardController extends AbstractActionController
 
         try {
             $sqlMod = "SELECT id, str_nombre_modulo, str_icono FROM modulo WHERE bit_activo = true ORDER BY int_orden ASC";
-            $modulos = iterator_to_array($this->db->query($sqlMod)->execute());
+            $modulos = iterator_to_array($this->db->query($sqlMod, []));
 
             $menu = [];
             foreach ($modulos as $m) {
@@ -67,7 +67,7 @@ class DashboardController extends AbstractActionController
 
                 // Obtener submodulos
                 $sqlSub = "SELECT id, str_nombre_submodulo, str_ruta FROM submodulo WHERE id_modulo = ? AND bit_activo = true ORDER BY int_orden ASC";
-                $subs   = iterator_to_array($this->db->query($sqlSub, [$idMod])->execute());
+                $subs   = iterator_to_array($this->db->query($sqlSub, [$idMod]));
 
                 $items = [];
                 foreach ($subs as $sub) {
