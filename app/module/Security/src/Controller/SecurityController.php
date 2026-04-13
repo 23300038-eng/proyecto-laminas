@@ -34,6 +34,51 @@ class SecurityController extends AbstractActionController
         $this->permisoPerfilModel = $permisoPerfilModel;
     }
 
+    /**
+     * Obtener módulos organizados por sección para la barra lateral
+     */
+    private function getModulosParaSidebar(): array
+    {
+        try {
+            $modulos = $this->moduloModel->getModulos();
+            $modulosAgrupados = [
+                'Administración' => [],
+                'Otros' => []
+            ];
+            
+            foreach ($modulos as $modulo) {
+                $item = [
+                    'nombre' => $modulo['str_nombre_modulo'],
+                    'icono' => $modulo['str_icono'] ?? '',
+                    'url' => '#'
+                ];
+                
+                // Mapear módulos a URLs según su nombre
+                $nombre = strtolower($modulo['str_nombre_modulo']);
+                if (strpos($nombre, 'perfil') !== false) {
+                    $item['url'] = $this->url()->fromRoute('security', ['action' => 'perfil']);
+                    $modulosAgrupados['Administración'][] = $item;
+                } elseif (strpos($nombre, 'usuario') !== false) {
+                    $item['url'] = $this->url()->fromRoute('security', ['action' => 'usuario']);
+                    $modulosAgrupados['Administración'][] = $item;
+                } elseif (strpos($nombre, 'modulo') !== false) {
+                    $item['url'] = $this->url()->fromRoute('security', ['action' => 'modulo']);
+                    $modulosAgrupados['Administración'][] = $item;
+                } elseif (strpos($nombre, 'permiso') !== false) {
+                    $item['url'] = $this->url()->fromRoute('security', ['action' => 'permisos-perfil']);
+                    $modulosAgrupados['Administración'][] = $item;
+                } else {
+                    $modulosAgrupados['Otros'][] = $item;
+                }
+            }
+            
+            // Eliminar secciones vacías
+            return array_filter($modulosAgrupados, fn($items) => !empty($items));
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
     // ==================== PERFIL ====================
 
     public function perfilAction()
@@ -51,6 +96,7 @@ class SecurityController extends AbstractActionController
             'page' => $page,
             'pages' => $pages,
             'total' => $total,
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],

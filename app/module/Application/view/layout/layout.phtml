@@ -16,7 +16,10 @@
             <div class="header-nav">
                 <div class="user-menu">
                     <div class="user-info">
-                        <div class="user-name">Administrator</div>
+                        <div class="user-name"><?php 
+                            if (session_status() === PHP_SESSION_NONE) session_start();
+                            echo htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Usuario'); 
+                        ?></div>
                         <div class="user-role">Administrador</div>
                     </div>
                 </div>
@@ -27,20 +30,42 @@
 
     <div class="layout">
         <aside class="sidebar">
-            <div class="sidebar-section">
-                <div class="sidebar-title">Administración</div>
-                <ul class="sidebar-menu">
-                    <li><a href="<?= $this->url('security', ['action'=>'perfil']) ?>">Seguridad</a></li>
-                </ul>
-            </div>
+            <?php if (!empty($modulos) && is_array($modulos)): ?>
+                <?php foreach ($modulos as $seccion => $items): ?>
+                    <div class="sidebar-section">
+                        <div class="sidebar-title"><?= htmlspecialchars($seccion) ?></div>
+                        <ul class="sidebar-menu">
+                            <?php foreach ($items as $item): ?>
+                                <li>
+                                    <a href="<?= htmlspecialchars($item['url']) ?>" title="<?= htmlspecialchars($item['nombre']) ?>">
+                                        <?php if (!empty($item['icono'])): ?>
+                                            <span class="menu-icon"><?= htmlspecialchars($item['icono']) ?></span>
+                                        <?php endif; ?>
+                                        <?= htmlspecialchars($item['nombre']) ?>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Administración</div>
+                    <ul class="sidebar-menu">
+                        <li><a href="<?= $this->url('security', ['action'=>'perfil']) ?>">Perfiles</a></li>
+                        <li><a href="<?= $this->url('security', ['action'=>'usuario']) ?>">Usuarios</a></li>
+                        <li><a href="<?= $this->url('security', ['action'=>'modulo']) ?>">Módulos</a></li>
+                    </ul>
+                </div>
 
-            <div class="sidebar-section">
-                <div class="sidebar-title">Navegación</div>
-                <ul class="sidebar-menu">
-                    <li><a href="<?= $this->url('dashboard', ['action'=>'index']) ?>">Dashboard</a></li>
-                    <li><a href="<?= $this->url('application', ['action'=>'index']) ?>">Principal</a></li>
-                </ul>
-            </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Navegación</div>
+                    <ul class="sidebar-menu">
+                        <li><a href="<?= $this->url('dashboard', ['action'=>'index']) ?>">Dashboard</a></li>
+                        <li><a href="<?= $this->url('application', ['action'=>'index']) ?>">Principal</a></li>
+                    </ul>
+                </div>
+            <?php endif; ?>
         </aside>
 
         <main class="main">
