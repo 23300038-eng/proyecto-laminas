@@ -1,53 +1,56 @@
-<?php
-/**
- * @var Laminas\View\Renderer\PhpRenderer $this
- */
-?>
 <!DOCTYPE html>
-<?php /* Layout base Novafarma (Application) */ ?>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Novafarma - Sistema Administrativo</title>
-    <?= $this->headMeta()->appendName('viewport','width=device-width, initial-scale=1.0') ?>
-
-    <link rel="stylesheet" href="<?= $this->basePath() ?>/css/bootstrap.min.css">
-    <link rel="stylesheet" href="<?= $this->basePath() ?>/css/style.css">
     <link rel="stylesheet" href="<?= $this->basePath() ?>/css/theme.css">
     <script>var basePath = '<?= $this->basePath() ?>';</script>
 </head>
 <body>
     <header class="header">
-        <div class="container-main">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-                <div class="brand"><h1>Novafarma</h1></div>
-                <nav class="navbar">
-                    <a href="<?= $this->basePath('/') ?>" class="btn secondary">Inicio</a>
-                    <a href="<?= $this->url('auth', ['action'=>'logout']) ?>" class="btn">Salir</a>
-                </nav>
+        <div class="header-inner">
+            <div class="brand">
+                <h1>Novafarma</h1>
+            </div>
+            <div class="header-nav">
+                <div class="user-menu">
+                    <div class="user-info">
+                        <div class="user-name">Administrator</div>
+                        <div class="user-role">Administrador</div>
+                    </div>
+                </div>
+                <a href="<?= $this->url('auth', ['action'=>'logout']) ?>" class="btn btn-sm">Salir</a>
             </div>
         </div>
     </header>
 
-    <div class="layout-grid container-main" style="padding-top:1rem">
+    <div class="layout">
         <aside class="sidebar">
-            <nav>
-                <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.25rem">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Administración</div>
+                <ul class="sidebar-menu">
                     <li><a href="<?= $this->url('security', ['action'=>'perfil']) ?>">Seguridad</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Navegación</div>
+                <ul class="sidebar-menu">
                     <li><a href="<?= $this->url('dashboard', ['action'=>'index']) ?>">Dashboard</a></li>
                     <li><a href="<?= $this->url('application', ['action'=>'index']) ?>">Principal</a></li>
                 </ul>
-            </nav>
+            </div>
         </aside>
 
-        <main class="content">
-            <?= $this->content ?>
-            <footer class="footer">Novafarma • &copy; <?= date('Y') ?></footer>
+        <main class="main">
+            <div class="container">
+                <?= $this->content ?>
+            </div>
+            <footer class="footer">Novafarma • Sist. Administrativo de Farmacéutica • &copy; <?= date('Y') ?></footer>
         </main>
     </div>
 
-    <?= $this->inlineScript()->appendFile($this->basePath('js/bootstrap.min.js'))
-        ->appendFile($this->basePath('js/main.js')) ?>
+    <script src="<?= $this->basePath() ?>/js/main.js"></script>
 </body>
 </html>

@@ -1,63 +1,93 @@
+<nav class="breadcrumbs">
+    <a href="<?= $this->url('dashboard', ['action'=>'index']) ?>">Dashboard</a>
+    <span>/</span>
+    <a href="<?= $this->url('security', ['action'=>'perfil']) ?>">Administración</a>
+    <span>/</span>
+    <span>Módulos</span>
+</nav>
+
 <div class="page-header">
     <h2>Gestión de Módulos</h2>
-    <a href="/security/modulo-add" class="btn btn-primary">+ Crear Módulo</a>
+    <a href="<?= $this->url('security', ['action'=>'modulo-add']) ?>" class="btn btn-primary">+ Crear Módulo</a>
 </div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Icono</th>
-            <th>Orden</th>
-            <th>Activo</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php if (count($modulos) > 0): ?>
-            <?php foreach ($modulos as $modulo): ?>
+<?php if (!empty($success)): ?>
+    <div class="alert alert-success">
+        <?php echo htmlspecialchars($success); ?>
+    </div>
+<?php endif; ?>
+
+<?php if (!empty($error)): ?>
+    <div class="alert alert-error">
+        <?php echo htmlspecialchars($error); ?>
+    </div>
+<?php endif; ?>
+
+<div class="table-container">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Icono</th>
+                <th>Orden</th>
+                <th>Activo</th>
+                <th style="text-align: center;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (!empty($modulos) && count($modulos) > 0): ?>
+                <?php foreach ($modulos as $modulo): ?>
+                    <tr>
+                        <td><strong><?php echo htmlspecialchars($modulo['id']); ?></strong></td>
+                        <td><?php echo htmlspecialchars($modulo['str_nombre_modulo']); ?></td>
+                        <td><?php echo htmlspecialchars($modulo['str_icono'] ?? '-'); ?></td>
+                        <td><?php echo htmlspecialchars($modulo['int_orden']); ?></td>
+                        <td>
+                            <?php if ($modulo['bit_activo']): ?>
+                                <span class="badge badge-success">Activo</span>
+                            <?php else: ?>
+                                <span class="badge badge-secondary">Inactivo</span>
+                            <?php endif; ?>
+                        </td>
+                        <td style="text-align: center;">
+                            <div class="btn-group">
+                                <a href="<?= $this->url('security', ['action'=>'modulo-detalle', 'id'=>$modulo['id']]) ?>" class="btn btn-sm btn-secondary" title="Ver detalles">Ver</a>
+                                <a href="<?= $this->url('security', ['action'=>'modulo-edit', 'id'=>$modulo['id']]) ?>" class="btn btn-sm btn-secondary" title="Editar">Editar</a>
+                                <a href="<?= $this->url('security', ['action'=>'modulo', 'delete'=>$modulo['id']]) ?>" class="btn btn-sm btn-danger" title="Eliminar" onclick="return confirm('¿Está seguro que desea eliminar este módulo?')">Eliminar</a>
+                            </div>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
                 <tr>
-                    <td><?php echo htmlspecialchars($modulo['id']); ?></td>
-                    <td><?php echo htmlspecialchars($modulo['str_nombre_modulo']); ?></td>
-                    <td><?php echo htmlspecialchars($modulo['str_icono'] ?? ''); ?></td>
-                    <td><?php echo htmlspecialchars($modulo['int_orden']); ?></td>
-                    <td><?php echo $modulo['bit_activo'] ? 'Sí' : 'No'; ?></td>
-                    <td>
-                        <div class="btn-group">
-                            <a href="/security/modulo-detalle/<?php echo $modulo['id']; ?>" class="btn btn-secondary" title="Ver">👁️</a>
-                            <a href="/security/modulo-edit/<?php echo $modulo['id']; ?>" class="btn btn-secondary" title="Editar">✏️</a>
-                            <a href="/security/modulo-delete/<?php echo $modulo['id']; ?>" class="btn btn-danger" title="Eliminar" onclick="return confirm('¿Está seguro?')">🗑️</a>
-                        </div>
+                    <td colspan="6" class="empty-state">
+                        <p>No hay módulos registrados en el sistema.</p>
                     </td>
                 </tr>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <tr>
-                <td colspan="6" style="text-align: center; padding: 2rem;">No hay módulos registrados</td>
-            </tr>
-        <?php endif; ?>
-    </tbody>
-</table>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</div>
 
-<?php if ($pages > 1): ?>
+<?php if (!empty($pages) && $pages > 1): ?>
     <div class="pagination">
         <?php if ($page > 1): ?>
-            <a href="?page=1">« Primera</a>
-            <a href="?page=<?php echo $page - 1; ?>">‹ Anterior</a>
+            <a href="?page=1" title="Primera página">« Primera</a>
+            <a href="?page=<?php echo $page - 1; ?>" title="Página anterior">‹ Anterior</a>
         <?php endif; ?>
 
         <?php for ($i = 1; $i <= $pages; $i++): ?>
             <?php if ($i === $page): ?>
-                <span class="active"><?php echo $i; ?></span>
+                <span class="pagination-current"><?php echo $i; ?></span>
             <?php else: ?>
                 <a href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
             <?php endif; ?>
         <?php endfor; ?>
 
         <?php if ($page < $pages): ?>
-            <a href="?page=<?php echo $page + 1; ?>">Siguiente ›</a>
-            <a href="?page=<?php echo $pages; ?>">Última »</a>
+            <a href="?page=<?php echo $page + 1; ?>" title="Siguiente página">Siguiente ›</a>
+            <a href="?page=<?php echo $pages; ?>" title="Última página">Última »</a>
         <?php endif; ?>
     </div>
 <?php endif; ?>

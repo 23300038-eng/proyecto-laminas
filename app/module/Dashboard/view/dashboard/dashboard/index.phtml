@@ -1,60 +1,380 @@
-<?php if (isset($breadcrumbs) && is_array($breadcrumbs)): ?>
-<ul class="breadcrumbs">
-	<?php foreach ($breadcrumbs as $breadcrumb): ?>
-		<li>
-			<?php if (!empty($breadcrumb['url'])): ?>
-				<a href="<?php echo htmlspecialchars($breadcrumb['url']); ?>">
-					<?php echo htmlspecialchars($breadcrumb['nombre']); ?>
-				</a>
-			<?php else: ?>
-				<?php echo htmlspecialchars($breadcrumb['nombre']); ?>
-			<?php endif; ?>
-		</li>
-	<?php endforeach; ?>
-</ul>
-<?php endif; ?>
+<nav class="breadcrumbs">
+	<a href="<?= $this->url('dashboard', ['action'=>'index']) ?>">Dashboard</a>
+	<span>/</span>
+	<span>Inicio</span>
+</nav>
 
 <div class="page-header">
-	<h2><?php echo htmlspecialchars($titulo ?? 'Dashboard'); ?></h2>
+	<h2>Panel de Control</h2>
 </div>
 
-<div style="background: white; padding: 2rem; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-	<h3><?php echo htmlspecialchars($titulo ?? 'Bienvenido'); ?></h3>
-	<p><?php echo htmlspecialchars($descripcion ?? 'Este es un módulo de demostración del sistema Novafarma'); ?></p>
+<div class="dashboard-grid">
+	<!-- Metrics Row -->
+	<div class="metrics-row">
+		<div class="metric-card">
+			<div class="metric-icon" style="background:#e3f2fd">
+				<span style="font-size:2rem">👥</span>
+			</div>
+			<div class="metric-content">
+				<div class="metric-value">12</div>
+				<div class="metric-label">Usuarios Registrados</div>
+			</div>
+		</div>
 
-	<div style="margin-top: 2rem;">
-		<h4>Acciones Disponibles</h4>
-		<div class="btn-group">
-			<button class="btn btn-primary">Crear</button>
-			<button class="btn btn-secondary">Consultar</button>
-			<button class="btn btn-secondary">Editar</button>
-			<button class="btn btn-danger">Eliminar</button>
+		<div class="metric-card">
+			<div class="metric-icon" style="background:#f3e5f5">
+				<span style="font-size:2rem">🔐</span>
+			</div>
+			<div class="metric-content">
+				<div class="metric-value">4</div>
+				<div class="metric-label">Perfiles de Acceso</div>
+			</div>
+		</div>
+
+		<div class="metric-card">
+			<div class="metric-icon" style="background:#e8f5e9">
+				<span style="font-size:2rem">📋</span>
+			</div>
+			<div class="metric-content">
+				<div class="metric-value">8</div>
+				<div class="metric-label">Módulos Activos</div>
+			</div>
+		</div>
+
+		<div class="metric-card">
+			<div class="metric-icon" style="background:#fff3e0">
+				<span style="font-size:2rem">⚡</span>
+			</div>
+			<div class="metric-content">
+				<div class="metric-value">100%</div>
+				<div class="metric-label">Sistema Operativo</div>
+			</div>
 		</div>
 	</div>
 
-	<div style="margin-top: 2rem; padding: 1.5rem; background: #f5f5f5; border-radius: 4px; border-left: 4px solid #1a73e8;">
-		<p><strong>Nota:</strong> Este modulo es solo una demostración. Para implementar funcionalidad real, siga el mismo patrón que los módulos de Seguridad.</p>
+	<!-- Quick Actions -->
+	<div class="section">
+		<h3>Acciones Rápidas</h3>
+		<div class="quick-actions">
+			<a href="<?= $this->url('security', ['action'=>'usuario-add']) ?>" class="action-card">
+				<div class="action-icon">➕</div>
+				<div class="action-title">Crear Usuario</div>
+				<div class="action-desc">Agregar nuevo usuario al sistema</div>
+			</a>
+
+			<a href="<?= $this->url('security', ['action'=>'perfil']) ?>" class="action-card">
+				<div class="action-icon">👤</div>
+				<div class="action-title">Gestionar Perfiles</div>
+				<div class="action-desc">Administrar roles y permisos</div>
+			</a>
+
+			<a href="<?= $this->url('security', ['action'=>'modulo']) ?>" class="action-card">
+				<div class="action-icon">📦</div>
+				<div class="action-title">Módulos</div>
+				<div class="action-desc">Ver módulos disponibles</div>
+			</a>
+
+			<a href="<?= $this->url('security', ['action'=>'usuario']) ?>" class="action-card">
+				<div class="action-icon">📊</div>
+				<div class="action-title">Usuarios</div>
+				<div class="action-desc">Ver lista de usuarios</div>
+			</a>
+		</div>
+	</div>
+
+	<!-- System Status -->
+	<div class="section">
+		<h3>Estado del Sistema</h3>
+		<div class="status-card">
+			<div class="status-item">
+				<div class="status-label">Servidor</div>
+				<div style="display:flex; align-items:center; gap:0.5rem">
+					<span class="badge badge-success">En línea</span>
+					<span style="color:#999; font-size:0.85rem">Última sincronización: hace 2 minutos</span>
+				</div>
+			</div>
+
+			<div class="status-item">
+				<div class="status-label">Base de Datos</div>
+				<div style="display:flex; align-items:center; gap:0.5rem">
+					<span class="badge badge-success">Conectado</span>
+					<span style="color:#999; font-size:0.85rem">Latencia: 2ms</span>
+				</div>
+			</div>
+
+			<div class="status-item">
+				<div class="status-label">Autenticación</div>
+				<div style="display:flex; align-items:center; gap:0.5rem">
+					<span class="badge badge-success">Activo</span>
+					<span style="color:#999; font-size:0.85rem">Métodos: Local + JWT</span>
+				</div>
+			</div>
+
+			<div class="status-item">
+				<div class="status-label">Almacenamiento</div>
+				<div style="display:flex; align-items:center; gap:0.5rem">
+					<span class="badge badge-success">512MB disponible</span>
+					<span style="color:#999; font-size:0.85rem">Uso: 2.3GB / 4GB</span>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Recent Activity -->
+	<div class="section">
+		<h3>Actividad Reciente</h3>
+		<div class="activity-log">
+			<div class="activity-item">
+				<div class="activity-icon success">✓</div>
+				<div class="activity-content">
+					<div class="activity-title">Usuario creado exitosamente</div>
+					<div class="activity-time">hace 5 minutos</div>
+				</div>
+			</div>
+
+			<div class="activity-item">
+				<div class="activity-icon info">ℹ</div>
+				<div class="activity-content">
+					<div class="activity-title">Sincronización de módulos completada</div>
+					<div class="activity-time">hace 1 hora</div>
+				</div>
+			</div>
+
+			<div class="activity-item">
+				<div class="activity-icon success">✓</div>
+				<div class="activity-content">
+					<div class="activity-title">Permisos actualizados</div>
+					<div class="activity-time">hace 3 horas</div>
+				</div>
+			</div>
+
+			<div class="activity-item">
+				<div class="activity-icon warning">!</div>
+				<div class="activity-content">
+					<div class="activity-title">Backup completado (verificación recomendada)</div>
+					<div class="activity-time">Ayer a las 02:00 AM</div>
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
 
 <style>
-.breadcrumbs {
-	list-style: none;
-	display: flex;
-	gap: 0.5rem;
-	margin-bottom: 2rem;
-	font-size: 0.9rem;
+.dashboard-grid {
+	display:flex;
+	flex-direction:column;
+	gap:2rem;
 }
 
-.breadcrumbs li:not(:last-child)::after {
-	content: '/';
-	margin-left: 0.5rem;
-	color: #ccc;
+.metrics-row {
+	display:grid;
+	grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));
+	gap:1.5rem;
 }
 
-.breadcrumbs a {
-	color: #1a73e8;
-	text-decoration: none;
+.metric-card {
+	background:#fff;
+	border:1px solid #e0e0e0;
+	border-radius:8px;
+	padding:1.5rem;
+	display:flex;
+	align-items:center;
+	gap:1rem;
+	box-shadow:0 1px 3px rgba(0,0,0,0.05);
+	transition:all 0.2s;
 }
 
-.breadcrumbs a:hover {
+.metric-card:hover {
+	box-shadow:0 4px 12px rgba(0,0,0,0.1);
+	transform:translateY(-2px);
+}
+
+.metric-icon {
+	width:60px;
+	height:60px;
+	border-radius:8px;
+	display:flex;
+	align-items:center;
+	justify-content:center;
+	flex-shrink:0;
+}
+
+.metric-content {
+	flex:1;
+}
+
+.metric-value {
+	font-size:1.75rem;
+	font-weight:700;
+	color:#0066cc;
+}
+
+.metric-label {
+	font-size:0.85rem;
+	color:#666;
+	margin-top:0.25rem;
+}
+
+.section {
+	background:#fff;
+	border-radius:8px;
+	padding:1.75rem;
+	border:1px solid #e0e0e0;
+	box-shadow:0 1px 3px rgba(0,0,0,0.05);
+}
+
+.section h3 {
+	font-size:1.25rem;
+	font-weight:600;
+	color:#212529;
+	margin-bottom:1.5rem;
+	padding-bottom:1rem;
+	border-bottom:2px solid #f0f0f0;
+}
+
+.quick-actions {
+	display:grid;
+	grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+	gap:1.5rem;
+}
+
+.action-card {
+	background:#f8f9fa;
+	border:2px solid #e0e0e0;
+	border-radius:8px;
+	padding:1.5rem;
+	text-align:center;
+	transition:all 0.2s;
+	text-decoration:none;
+	color:inherit;
+	cursor:pointer;
+}
+
+.action-card:hover {
+	border-color:#0066cc;
+	background:#f0f7ff;
+	transform:translateY(-2px);
+	box-shadow:0 4px 12px rgba(0,102,204,0.15);
+}
+
+.action-icon {
+	font-size:2.5rem;
+	margin-bottom:0.75rem;
+}
+
+.action-title {
+	font-weight:600;
+	color:#212529;
+	margin-bottom:0.5rem;
+}
+
+.action-desc {
+	font-size:0.85rem;
+	color:#666;
+}
+
+.status-card {
+	background:#f8f9fa;
+	border-radius:8px;
+	padding:1.5rem;
+	display:flex;
+	flex-direction:column;
+	gap:1.25rem;
+}
+
+.status-item {
+	display:flex;
+	justify-content:space-between;
+	align-items:center;
+	padding-bottom:1rem;
+	border-bottom:1px solid #e0e0e0;
+}
+
+.status-item:last-child {
+	border-bottom:none;
+	padding-bottom:0;
+}
+
+.status-label {
+	font-weight:600;
+	color:#212529;
+	min-width:120px;
+}
+
+.activity-log {
+	display:flex;
+	flex-direction:column;
+	gap:0.75rem;
+}
+
+.activity-item {
+	display:flex;
+	gap:1rem;
+	padding:1rem;
+	background:#f8f9fa;
+	border-radius:6px;
+	border-left:4px solid #e0e0e0;
+	align-items:flex-start;
+}
+
+.activity-icon {
+	width:32px;
+	height:32px;
+	border-radius:50%;
+	display:flex;
+	align-items:center;
+	justify-content:center;
+	font-weight:bold;
+	color:#fff;
+	font-size:0.9rem;
+	flex-shrink:0;
+}
+
+.activity-icon.success {
+	background:#2e7d32;
+}
+
+.activity-icon.info {
+	background:#1565c0;
+}
+
+.activity-icon.warning {
+	background:#f57c00;
+}
+
+.activity-content {
+	flex:1;
+}
+
+.activity-title {
+	font-weight:500;
+	color:#212529;
+	margin-bottom:0.25rem;
+}
+
+.activity-time {
+	font-size:0.8rem;
+	color:#999;
+}
+
+@media (max-width:768px) {
+	.metrics-row {
+		grid-template-columns:1fr;
+	}
+
+	.metric-card {
+		flex-direction:column;
+		text-align:center;
+	}
+
+	.quick-actions {
+		grid-template-columns:1fr;
+	}
+
+	.status-item {
+		flex-direction:column;
+		align-items:flex-start;
+		gap:0.75rem;
+	}
+}
+</style>

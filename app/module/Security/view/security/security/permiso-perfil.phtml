@@ -1,67 +1,115 @@
+<nav class="breadcrumbs">
+    <a href="<?= $this->url('dashboard', ['action'=>'index']) ?>">Dashboard</a>
+    <span>/</span>
+    <a href="<?= $this->url('security', ['action'=>'perfil']) ?>">Administración</a>
+    <span>/</span>
+    <span>Permisos por Perfil</span>
+</nav>
+
 <div class="page-header">
-    <h2>Gestión de Permisos-Perfil</h2>
-    <a href="/security/permiso-perfil-add" class="btn btn-primary">+ Crear Permiso</a>
+    <h2>Gestión de Permisos por Perfil</h2>
+    <a href="<?= $this->url('security', ['action'=>'permiso-perfil-add']) ?>" class="btn btn-primary">+ Asignar Permisos</a>
 </div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Módulo</th>
-            <th>Perfil</th>
-            <th>Crear</th>
-            <th>Editar</th>
-            <th>Consultar</th>
-            <th>Eliminar</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php if (count($permisos) > 0): ?>
-            <?php foreach ($permisos as $permiso): ?>
+<?php if (!empty($success)): ?>
+    <div class="alert alert-success">
+        <?php echo htmlspecialchars($success); ?>
+    </div>
+<?php endif; ?>
+
+<?php if (!empty($error)): ?>
+    <div class="alert alert-error">
+        <?php echo htmlspecialchars($error); ?>
+    </div>
+<?php endif; ?>
+
+<div class="table-container">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Módulo</th>
+                <th>Perfil</th>
+                <th style="text-align: center;">Crear</th>
+                <th style="text-align: center;">Editar</th>
+                <th style="text-align: center;">Consultar</th>
+                <th style="text-align: center;">Eliminar</th>
+                <th style="text-align: center;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (!empty($permisos) && count($permisos) > 0): ?>
+                <?php foreach ($permisos as $permiso): ?>
+                    <tr>
+                        <td><strong><?php echo htmlspecialchars($permiso['id']); ?></strong></td>
+                        <td><?php echo htmlspecialchars($permiso['str_nombre_modulo']); ?></td>
+                        <td><?php echo htmlspecialchars($permiso['str_nombre_perfil']); ?></td>
+                        <td style="text-align: center;">
+                            <?php if ($permiso['bit_agregar']): ?>
+                                <span class="badge badge-success">✓</span>
+                            <?php else: ?>
+                                <span class="badge badge-secondary">✗</span>
+                            <?php endif; ?>
+                        </td>
+                        <td style="text-align: center;">
+                            <?php if ($permiso['bit_editar']): ?>
+                                <span class="badge badge-success">✓</span>
+                            <?php else: ?>
+                                <span class="badge badge-secondary">✗</span>
+                            <?php endif; ?>
+                        </td>
+                        <td style="text-align: center;">
+                            <?php if ($permiso['bit_consulta']): ?>
+                                <span class="badge badge-success">✓</span>
+                            <?php else: ?>
+                                <span class="badge badge-secondary">✗</span>
+                            <?php endif; ?>
+                        </td>
+                        <td style="text-align: center;">
+                            <?php if ($permiso['bit_eliminar']): ?>
+                                <span class="badge badge-success">✓</span>
+                            <?php else: ?>
+                                <span class="badge badge-secondary">✗</span>
+                            <?php endif; ?>
+                        </td>
+                        <td style="text-align: center;">
+                            <div class="btn-group">
+                                <a href="<?= $this->url('security', ['action'=>'permiso-perfil-detalle', 'id'=>$permiso['id']]) ?>" class="btn btn-sm btn-secondary" title="Ver detalles">Ver</a>
+                                <a href="<?= $this->url('security', ['action'=>'permiso-perfil-edit', 'id'=>$permiso['id']]) ?>" class="btn btn-sm btn-secondary" title="Editar">Editar</a>
+                                <a href="<?= $this->url('security', ['action'=>'permiso-perfil', 'delete'=>$permiso['id']]) ?>" class="btn btn-sm btn-danger" title="Eliminar" onclick="return confirm('¿Está seguro que desea eliminar este permiso?')">Eliminar</a>
+                            </div>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
                 <tr>
-                    <td><?php echo htmlspecialchars($permiso['id']); ?></td>
-                    <td><?php echo htmlspecialchars($permiso['str_nombre_modulo']); ?></td>
-                    <td><?php echo htmlspecialchars($permiso['str_nombre_perfil']); ?></td>
-                    <td><?php echo $permiso['bit_agregar'] ? '✓' : '✗'; ?></td>
-                    <td><?php echo $permiso['bit_editar'] ? '✓' : '✗'; ?></td>
-                    <td><?php echo $permiso['bit_consulta'] ? '✓' : '✗'; ?></td>
-                    <td><?php echo $permiso['bit_eliminar'] ? '✓' : '✗'; ?></td>
-                    <td>
-                        <div class="btn-group">
-                            <a href="/security/permiso-perfil-detalle/<?php echo $permiso['id']; ?>" class="btn btn-secondary" title="Ver">👁️</a>
-                            <a href="/security/permiso-perfil-edit/<?php echo $permiso['id']; ?>" class="btn btn-secondary" title="Editar">✏️</a>
-                            <a href="/security/permiso-perfil-delete/<?php echo $permiso['id']; ?>" class="btn btn-danger" title="Eliminar" onclick="return confirm('¿Está seguro?')">🗑️</a>
-                        </div>
+                    <td colspan="8" class="empty-state">
+                        <p>No hay permisos registrados en el sistema.</p>
                     </td>
                 </tr>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <tr>
-                <td colspan="8" style="text-align: center; padding: 2rem;">No hay permisos registrados</td>
-            </tr>
-        <?php endif; ?>
-    </tbody>
-</table>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</div>
 
-<?php if ($pages > 1): ?>
+<?php if (!empty($pages) && $pages > 1): ?>
     <div class="pagination">
         <?php if ($page > 1): ?>
-            <a href="?page=1">« Primera</a>
-            <a href="?page=<?php echo $page - 1; ?>">‹ Anterior</a>
+            <a href="?page=1" title="Primera página">« Primera</a>
+            <a href="?page=<?php echo $page - 1; ?>" title="Página anterior">‹ Anterior</a>
         <?php endif; ?>
 
         <?php for ($i = 1; $i <= $pages; $i++): ?>
             <?php if ($i === $page): ?>
-                <span class="active"><?php echo $i; ?></span>
+                <span class="pagination-current"><?php echo $i; ?></span>
             <?php else: ?>
                 <a href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
             <?php endif; ?>
         <?php endfor; ?>
 
         <?php if ($page < $pages): ?>
-            <a href="?page=<?php echo $page + 1; ?>">Siguiente ›</a>
-            <a href="?page=<?php echo $pages; ?>">Última »</a>
+            <a href="?page=<?php echo $page + 1; ?>" title="Siguiente página">Siguiente ›</a>
+            <a href="?page=<?php echo $pages; ?>" title="Última página">Última »</a>
         <?php endif; ?>
     </div>
 <?php endif; ?>

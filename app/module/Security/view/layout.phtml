@@ -4,315 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Novafarma - Sistema Administrativo</title>
-
-    <link rel="stylesheet" href="<?= $this->basePath() ?>/css/bootstrap.min.css">
-    <link rel="stylesheet" href="<?= $this->basePath() ?>/css/style.css">
     <link rel="stylesheet" href="<?= $this->basePath() ?>/css/theme.css">
+    <script>var basePath = '<?= $this->basePath() ?>';</script>
 </head>
 <body>
     <header class="header">
-        <div class="container-main">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-                <div class="brand"><h1>Novafarma</h1></div>
-                <nav class="navbar">
-                    <a href="<?= $this->basePath('/') ?>" class="btn secondary">Inicio</a>
-                    <a href="<?= $this->url('auth', ['action'=>'logout']) ?>" class="btn">Salir</a>
-                </nav>
+        <div class="header-inner">
+            <div class="brand">
+                <h1>Novafarma</h1>
+            </div>
+            <div class="header-nav">
+                <div class="user-menu">
+                    <div class="user-info">
+                        <div class="user-name">Administrator</div>
+                        <div class="user-role">Administrador</div>
+                    </div>
+                </div>
+                <a href="<?= $this->url('auth', ['action'=>'logout']) ?>" class="btn btn-sm">Salir</a>
             </div>
         </div>
     </header>
 
-    <div class="layout-grid container-main" style="padding-top:1rem">
+    <div class="layout">
         <aside class="sidebar">
-            <nav>
-                <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.25rem">
-                    <li><a href="<?= $this->url('security', ['action'=>'perfil']) ?>">Seguridad</a></li>
-                    <li><a href="<?= $this->url('dashboard', ['action'=>'index']) ?>">Dashboard</a></li>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Administración</div>
+                <ul class="sidebar-menu">
+                    <li><a href="<?= $this->url('security', ['action'=>'perfil']) ?>">Perfiles</a></li>
+                    <li><a href="<?= $this->url('security', ['action'=>'usuario']) ?>">Usuarios</a></li>
+                    <li><a href="<?= $this->url('security', ['action'=>'modulo']) ?>">Módulos</a></li>
+                    <li><a href="<?= $this->url('security', ['action'=>'permisos-perfil']) ?>">Permisos</a></li>
                 </ul>
-            </nav>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Navegación</div>
+                <ul class="sidebar-menu">
+                    <li><a href="<?= $this->url('dashboard', ['action'=>'index']) ?>">Dashboard</a></li>
+                    <li><a href="<?= $this->url('application', ['action'=>'index']) ?>">Principal</a></li>
+                </ul>
+            </div>
         </aside>
 
-        <main class="content">
-            <?= $this->content ?>
-            <footer class="footer">Novafarma • &copy; <?= date('Y') ?></footer>
+        <main class="main">
+            <div class="container">
+                <?= $this->content ?>
+            </div>
+            <footer class="footer">Novafarma • Sist. Administrativo de Farmacéutica • &copy; <?= date('Y') ?></footer>
         </main>
     </div>
 
-    <?= $this->inlineScript()->appendFile($this->basePath('js/bootstrap.min.js'))
-        ->appendFile($this->basePath('js/main.js')) ?>
-</body>
-</html>
-        }
-
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .page-header h2 {
-            font-size: 1.75rem;
-            font-weight: 600;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 0.625rem 1.25rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            text-decoration: none;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
-
-        .btn-primary {
-            background: #1a73e8;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #1765cc;
-            box-shadow: 0 2px 4px rgba(26, 115, 232, 0.3);
-        }
-
-        .btn-secondary {
-            background: #f8f8f8;
-            color: #333;
-            border: 1px solid #ddd;
-        }
-
-        .btn-secondary:hover {
-            background: #f0f0f0;
-        }
-
-        .btn-danger {
-            background: #d32f2f;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #b71c1c;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .table {
-            width: 100%;
-            background: white;
-            border-collapse: collapse;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            overflow: hidden;
-        }
-
-        .table thead {
-            background: #f5f5f5;
-            border-bottom: 2px solid #e0e0e0;
-        }
-
-        .table th {
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: #555;
-        }
-
-        .table td {
-            padding: 1rem;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .table tbody tr:hover {
-            background: #fafafa;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #333;
-            font-size: 0.95rem;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-            font-family: inherit;
-            transition: border-color 0.2s;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #1a73e8;
-            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .form-check {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0.75rem;
-        }
-
-        .form-check input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            margin-right: 0.5rem;
-            cursor: pointer;
-        }
-
-        .form-check label {
-            margin-bottom: 0;
-            cursor: pointer;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        .alert {
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            border-radius: 4px;
-            border-left: 4px solid;
-        }
-
-        .alert-error {
-            background: #ffebee;
-            color: #c62828;
-            border-left-color: #d32f2f;
-        }
-
-        .alert-success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border-left-color: #4caf50;
-        }
-
-        .pagination {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 2rem;
-            justify-content: center;
-        }
-
-        .pagination a, .pagination span {
-            padding: 0.5rem 0.75rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            text-decoration: none;
-            color: #1a73e8;
-        }
-
-        .pagination a:hover {
-            background: #f5f5f5;
-        }
-
-        .pagination .active {
-            background: #1a73e8;
-            color: white;
-            border-color: #1a73e8;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: #999;
-        }
-
-        .empty-state p {
-            margin-bottom: 1.5rem;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-
-            .page-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .table {
-                font-size: 0.9rem;
-            }
-
-            .table th, .table td {
-                padding: 0.75rem;
-            }
-
-            .btn {
-                padding: 0.5rem 1rem;
-                font-size: 0.85rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>🏥 Novafarma</h1>
-    </header>
-
-    <div class="container">
-        <?php if (isset($breadcrumbs) && is_array($breadcrumbs)): ?>
-            <ul class="breadcrumbs">
-                <?php foreach ($breadcrumbs as $breadcrumb): ?>
-                    <li>
-                        <?php if (!empty($breadcrumb['url'])): ?>
-                            <a href="<?php echo htmlspecialchars($breadcrumb['url']); ?>">
-                                <?php echo htmlspecialchars($breadcrumb['nombre']); ?>
-                            </a>
-                        <?php else: ?>
-                            <?php echo htmlspecialchars($breadcrumb['nombre']); ?>
-                        <?php endif; ?>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
-
-        <?php if (isset($error)): ?>
-            <div class="alert alert-error">
-                <?php echo htmlspecialchars($error); ?>
-            </div>
-        <?php endif; ?>
-
-        <?php if (isset($success)): ?>
-            <div class="alert alert-success">
-                <?php echo htmlspecialchars($success); ?>
-            </div>
-        <?php endif; ?>
-
-        <?php echo $content; ?>
-    </div>
+    <script src="<?= $this->basePath() ?>/js/main.js"></script>
 </body>
 </html>
