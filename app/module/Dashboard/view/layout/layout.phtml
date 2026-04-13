@@ -6,76 +6,225 @@
     <title>Novafarma - Sistema Administrativo</title>
     <link rel="stylesheet" href="<?= $this->basePath() ?>/css/theme.css">
     <script>var basePath = '<?= $this->basePath() ?>';</script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, #0066cc 0%, #004a99 100%);
+            color: white;
+            padding: 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-inner {
+            max-width: 100%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 70px;
+        }
+        
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white;
+            text-decoration: none;
+            margin: 0;
+        }
+        
+        .navbar-menu {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            flex: 1;
+            margin-left: 2rem;
+        }
+        
+        .navbar-menu li {
+            position: relative;
+        }
+        
+        .navbar-menu > li > a {
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        .navbar-menu > li > a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        
+        .navbar-submenu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            color: #333;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            min-width: 200px;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: none;
+            z-index: 1000;
+        }
+        
+        .navbar-menu > li:hover > .navbar-submenu {
+            display: block;
+        }
+        
+        .navbar-submenu li {
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .navbar-submenu li:last-child {
+            border-bottom: none;
+        }
+        
+        .navbar-submenu a {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        
+        .navbar-submenu a:hover {
+            background-color: #f5f5f5;
+            padding-left: 1.25rem;
+        }
+        
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-left: auto;
+        }
+        
+        .navbar-user-info {
+            text-align: right;
+            font-size: 0.9rem;
+        }
+        
+        .navbar-user-name {
+            font-weight: 600;
+            display: block;
+        }
+        
+        .navbar-user-role {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+        
+        .navbar-logout {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-logout:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: white;
+        }
+        
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        main.main {
+            flex: 1;
+        }
+    </style>
 </head>
 <body>
-    <header class="header">
-        <div class="header-inner">
-            <div class="brand">
-                <h1>Novafarma</h1>
-            </div>
-            <div class="header-nav">
-                <div class="user-menu">
-                    <div class="user-info">
-                        <div class="user-name"><?php 
-                            if (session_status() === PHP_SESSION_NONE) session_start();
-                            echo htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Usuario'); 
-                        ?></div>
-                        <div class="user-role">Administrador</div>
-                    </div>
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <h1 class="navbar-brand">Novafarma</h1>
+            
+            <?php if (!empty($modulos) && is_array($modulos)): ?>
+                <ul class="navbar-menu">
+                    <?php foreach ($modulos as $seccion => $items): ?>
+                        <li>
+                            <a href="#" title="<?= htmlspecialchars($seccion) ?>">
+                                <?= htmlspecialchars($seccion) ?>
+                            </a>
+                            <ul class="navbar-submenu">
+                                <?php foreach ($items as $item): ?>
+                                    <li>
+                                        <a href="<?= htmlspecialchars($item['url']) ?>" title="<?= htmlspecialchars($item['nombre']) ?>">
+                                            <?php if (!empty($item['icono'])): ?>
+                                                <span><?= htmlspecialchars($item['icono']) ?></span>
+                                            <?php endif; ?>
+                                            <?= htmlspecialchars($item['nombre']) ?>
+                                        </a>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php else: ?>
+                <ul class="navbar-menu">
+                    <li>
+                        <a href="#" title="Administración">Administración</a>
+                        <ul class="navbar-submenu">
+                            <li><a href="<?= $this->url('security', ['action'=>'perfil']) ?>">Perfiles</a></li>
+                            <li><a href="<?= $this->url('security', ['action'=>'usuario']) ?>">Usuarios</a></li>
+                            <li><a href="<?= $this->url('security', ['action'=>'modulo']) ?>">Módulos</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="<?= $this->url('dashboard', ['action'=>'index']) ?>">Dashboard</a>
+                    </li>
+                </ul>
+            <?php endif; ?>
+            
+            <div class="navbar-user">
+                <div class="navbar-user-info">
+                    <span class="navbar-user-name"><?php 
+                        if (session_status() === PHP_SESSION_NONE) session_start();
+                        echo htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Usuario'); 
+                    ?></span>
+                    <span class="navbar-user-role"><?= htmlspecialchars($_SESSION['usuario_rol'] ?? 'Usuario') ?></span>
                 </div>
-                <a href="<?= $this->url('auth', ['action'=>'logout']) ?>" class="btn btn-sm">Salir</a>
+                <a href="<?= $this->url('auth', ['action'=>'logout']) ?>" class="navbar-logout">Salir</a>
             </div>
         </div>
-    </header>
+    </nav>
 
-    <div class="layout">
-        <aside class="sidebar">
-            <?php if (!empty($modulos) && is_array($modulos)): ?>
-                <?php foreach ($modulos as $seccion => $items): ?>
-                    <div class="sidebar-section">
-                        <div class="sidebar-title"><?= htmlspecialchars($seccion) ?></div>
-                        <ul class="sidebar-menu">
-                            <?php foreach ($items as $item): ?>
-                                <li>
-                                    <a href="<?= htmlspecialchars($item['url']) ?>" title="<?= htmlspecialchars($item['nombre']) ?>">
-                                        <?php if (!empty($item['icono'])): ?>
-                                            <span class="menu-icon"><?= htmlspecialchars($item['icono']) ?></span>
-                                        <?php endif; ?>
-                                        <?= htmlspecialchars($item['nombre']) ?>
-                                    </a>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </div>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <div class="sidebar-section">
-                    <div class="sidebar-title">Administración</div>
-                    <ul class="sidebar-menu">
-                        <li><a href="<?= $this->url('security', ['action'=>'perfil']) ?>">Perfiles</a></li>
-                        <li><a href="<?= $this->url('security', ['action'=>'usuario']) ?>">Usuarios</a></li>
-                        <li><a href="<?= $this->url('security', ['action'=>'modulo']) ?>">Módulos</a></li>
-                    </ul>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="sidebar-title">Navegación</div>
-                    <ul class="sidebar-menu">
-                        <li><a href="<?= $this->url('dashboard', ['action'=>'index']) ?>">Dashboard</a></li>
-                        <li><a href="<?= $this->url('application', ['action'=>'index']) ?>">Principal</a></li>
-                    </ul>
-                </div>
-            <?php endif; ?>
-        </aside>
-
+    <div class="content-wrapper">
         <main class="main">
             <div class="container">
                 <?= $this->content ?>
             </div>
-            <footer class="footer">Novafarma • Sist. Administrativo de Farmacéutica • &copy; <?= date('Y') ?></footer>
         </main>
-    </div>
-
-    <script src="<?= $this->basePath() ?>/js/main.js"></script>
-</body>
-</html>
+        <footer class="footer">Novafarma • Sist. Administrativo de Farmacéutica • &copy; <?= date('Y') ?></footer>

@@ -31,6 +31,13 @@ return [
         ],
     ],
 
+    'middleware_pipeline' => [
+        'authentication' => [
+            'middleware' => Middleware\AuthenticationMiddleware::class,
+            'priority' => 1000, // Ejecutar primero
+        ],
+    ],
+
     'view_manager' => [
         'template_path_stack' => [
             __DIR__ . '/../view',

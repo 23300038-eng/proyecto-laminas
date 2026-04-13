@@ -33,6 +33,13 @@ return [
         ],
     ],
 
+    'middleware_pipeline' => [
+        'authorization' => [
+            'middleware' => Middleware\AuthorizationMiddleware::class,
+            'priority' => 900, // Ejecutar después de autenticación
+        ],
+    ],
+
     'view_manager' => [
         'template_path_stack' => [
             __DIR__ . '/../view',
