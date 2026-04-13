@@ -3,32 +3,53 @@
  * @var Laminas\View\Renderer\PhpRenderer $this
  */
 ?>
-<?= $this->doctype() ?>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <?= $this->headTitle('Proyecto Laminas')->setSeparator(' - ')->setAutoEscape(false) ?>
+<!DOCTYPE html>
+<?php /* Layout base Novafarma (Application) */ ?>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novafarma - Sistema Administrativo</title>
+    <?= $this->headMeta()->appendName('viewport','width=device-width, initial-scale=1.0') ?>
 
-        <?= $this->headMeta()
-            ->appendName('viewport', 'width=device-width, initial-scale=1.0')
-            ->appendHttpEquiv('X-UA-Compatible', 'IE=edge')
-        ?>
+    <?= $this->headLink()
+        ->appendStylesheet($this->basePath('css/bootstrap.min.css'))
+        ->appendStylesheet($this->basePath('css/style.css'))
+        ->appendStylesheet($this->basePath('css/theme.css')) ?>
+    <?= $this->headScript() ?>
+    <script>var basePath = '<?= $this->basePath() ?>';</script>
+</head>
+<body>
+    <header class="header">
+        <div class="container-main">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <div class="brand"><h1>Novafarma</h1></div>
+                <nav class="navbar">
+                    <a href="<?= $this->basePath('/') ?>" class="btn secondary">Inicio</a>
+                    <a href="<?= $this->url('auth', ['action'=>'logout']) ?>" class="btn">Salir</a>
+                </nav>
+            </div>
+        </div>
+    </header>
 
-        <!-- Styles -->
-        <?= $this->headLink([
-                'rel' => 'shortcut icon',
-                'type' => 'image/vnd.microsoft.icon',
-                'href' => $this->basePath() . '/img/favicon.ico'
-            ])
-            ->prependStylesheet($this->basePath('css/style.css'))
-            ->prependStylesheet($this->basePath('css/bootstrap.min.css')) ?>
+    <div class="layout-grid container-main" style="padding-top:1rem">
+        <aside class="sidebar">
+            <nav>
+                <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.25rem">
+                    <li><a href="<?= $this->url('security', ['action'=>'perfil']) ?>">Seguridad</a></li>
+                    <li><a href="<?= $this->url('dashboard', ['action'=>'index']) ?>">Dashboard</a></li>
+                    <li><a href="<?= $this->url('application', ['action'=>'index']) ?>">Principal</a></li>
+                </ul>
+            </nav>
+        </aside>
 
-        <!-- Scripts -->
-        <?= $this->headScript() ?>
-    </head>
-    <body>
-        <?= $this->content ?>
-        <?= $this->inlineScript()
-            ->prependFile($this->basePath('js/bootstrap.min.js')) ?>
-    </body>
+        <main class="content">
+            <?= $this->content ?>
+            <footer class="footer">Novafarma • &copy; <?= date('Y') ?></footer>
+        </main>
+    </div>
+
+    <?= $this->inlineScript()->appendFile($this->basePath('js/bootstrap.min.js'))
+        ->appendFile($this->basePath('js/main.js')) ?>
+</body>
 </html>
