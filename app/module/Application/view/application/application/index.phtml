@@ -1,1 +1,216 @@
-<?php include __DIR__ . '/../index/index.phtml'; ?>
+<nav class="breadcrumbs">
+	<a href="<?= $this->url('application', ['action'=>'index']) ?>">Principal</a>
+	<span>/</span>
+	<span>Inicio</span>
+</nav>
+
+<div class="page-header">
+	<h2>Bienvenido a Novafarma</h2>
+</div>
+
+<div class="intro-section">
+	<h3>Sistema de Gestión Administrativa Farmacéutica</h3>
+	<p>Novafarma es una solución integral diseñada para optimizar los procesos administrativos y de seguridad en empresas farmacéuticas. Proporciona herramientas avanzadas para la gestión de usuarios, perfiles, módulos y permisos.</p>
+
+	<div class="features-grid">
+		<div class="feature-card">
+			<div class="feature-icon">🔒</div>
+			<h4>Seguridad Robusta</h4>
+			<p>Sistema de autenticación basado en roles y permisos granulares para proteger datos sensibles.</p>
+		</div>
+
+		<div class="feature-card">
+			<div class="feature-icon">👥</div>
+			<h4>Gestión de Usuarios</h4>
+			<p>Administración centralizada de usuarios con perfiles personalizables y control de acceso.</p>
+		</div>
+
+		<div class="feature-card">
+			<div class="feature-icon">📊</div>
+			<h4>Analytics</h4>
+			<p>Reportes detallados y análisis de actividad del sistema en tiempo real.</p>
+		</div>
+
+		<div class="feature-card">
+			<div class="feature-icon">⚙️</div>
+			<h4>Módulos Dinámicos</h4>
+			<p>Arquitectura modular extensible para agregar nuevas funcionalidades.</p>
+		</div>
+
+		<div class="feature-card">
+			<div class="feature-icon">🌐</div>
+			<h4>Interfaz Responsiva</h4>
+			<p>Diseño moderno y adaptable para cualquier dispositivo y resolución.</p>
+		</div>
+
+		<div class="feature-card">
+			<div class="feature-icon">📱</div>
+			<h4>Disponibilidad</h4>
+			<p>Acceso desde cualquier lugar con conexión segura y monitoreo 24/7.</p>
+		</div>
+	</div>
+</div>
+
+<div class="info-section">
+	<div class="info-card">
+		<h4>Información del Sistema</h4>
+		<ul class="info-list">
+			<li><strong>Versión:</strong> 1.0.0</li>
+			<li><strong>Ambiente:</strong> Producción</li>
+			<li><strong>Framework:</strong> Laminas</li>
+			<li><strong>Base de Datos:</strong> PostgreSQL</li>
+			<li><strong>Estado:</strong> <span class="badge badge-success">Operativo</span></li>
+		</ul>
+	</div>
+
+	<div class="info-card">
+		<h4>Enlaces Útiles</h4>
+		<div style="display:flex; flex-direction:column; gap:0.75rem; margin-top:1rem;">
+			<a href="<?= $this->url('security', ['action'=>'usuario']) ?>" class="link-button">
+				Gestión de Usuarios
+			</a>
+			<a href="<?= $this->url('security', ['action'=>'perfil']) ?>" class="link-button">
+				Administración de Perfiles
+			</a>
+			<a href="<?= $this->url('security', ['action'=>'modulo']) ?>" class="link-button">
+				Módulos del Sistema
+			</a>
+			<a href="<?= $this->url('security', ['action'=>'permisos-perfil']) ?>" class="link-button">
+				Gestión de Permisos
+			</a>
+		</div>
+	</div>
+</div>
+
+<style>
+.intro-section {
+	background:#fff;
+	border-radius:8px;
+	padding:2rem;
+	margin-bottom:2rem;
+	border:1px solid #e0e0e0;
+	box-shadow:0 1px 3px rgba(0,0,0,0.05);
+}
+
+.intro-section h3 {
+	color:#0066cc;
+	font-size:1.5rem;
+	margin-bottom:1rem;
+}
+
+.intro-section p {
+	color:#666;
+	line-height:1.6;
+	margin-bottom:2rem;
+}
+
+.features-grid {
+	display:grid;
+	grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+	gap:1.5rem;
+	margin-top:2rem;
+}
+
+.feature-card {
+	background:#f8f9fa;
+	border:1px solid #e0e0e0;
+	border-radius:8px;
+	padding:1.75rem;
+	text-align:center;
+	transition:all 0.2s;
+}
+
+.feature-card:hover {
+	border-color:#0066cc;
+	box-shadow:0 4px 12px rgba(0,102,204,0.15);
+	transform:translateY(-2px);
+}
+
+.feature-icon {
+	font-size:2.5rem;
+	margin-bottom:1rem;
+}
+
+.feature-card h4 {
+	color:#212529;
+	margin-bottom:0.75rem;
+	font-size:1.1rem;
+}
+
+.feature-card p {
+	color:#666;
+	font-size:0.9rem;
+	line-height:1.5;
+}
+
+.info-section {
+	display:grid;
+	grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));
+	gap:1.5rem;
+	margin-bottom:2rem;
+}
+
+.info-card {
+	background:#fff;
+	border:1px solid #e0e0e0;
+	border-radius:8px;
+	padding:1.75rem;
+	box-shadow:0 1px 3px rgba(0,0,0,0.05);
+}
+
+.info-card h4 {
+	color:#212529;
+	margin-bottom:1rem;
+	font-size:1.1rem;
+	border-bottom:2px solid #f0f0f0;
+	padding-bottom:0.75rem;
+}
+
+.info-list {
+	list-style:none;
+	display:flex;
+	flex-direction:column;
+	gap:0.75rem;
+}
+
+.info-list li {
+	color:#666;
+	font-size:0.95rem;
+}
+
+.info-list strong {
+	color:#212529;
+}
+
+.link-button {
+	display:block;
+	padding:0.75rem 1rem;
+	background:#f0f7ff;
+	color:#0066cc;
+	border:1px solid #cce0ff;
+	border-radius:6px;
+	text-decoration:none;
+	text-align:center;
+	font-weight:500;
+	transition:all 0.2s;
+}
+
+.link-button:hover {
+	background:#cce0ff;
+	color:#004a99;
+}
+
+@media (max-width:768px) {
+	.features-grid {
+		grid-template-columns:1fr;
+	}
+
+	.intro-section {
+		padding:1.5rem;
+	}
+
+	.feature-card {
+		padding:1.25rem;
+	}
+}
+</style>
