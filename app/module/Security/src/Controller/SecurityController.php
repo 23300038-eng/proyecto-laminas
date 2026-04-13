@@ -116,6 +116,7 @@ class SecurityController extends AbstractActionController
             if (empty($data['str_nombre_perfil'])) {
                 return new ViewModel([
                     'error' => 'El nombre del perfil es requerido',
+                    'modulos' => $this->getModulosParaSidebar(),
                     'breadcrumbs' => [
                         ['nombre' => 'Inicio', 'url' => '/'],
                         ['nombre' => 'Seguridad', 'url' => null],
@@ -130,6 +131,7 @@ class SecurityController extends AbstractActionController
         }
 
         return new ViewModel([
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
@@ -157,6 +159,7 @@ class SecurityController extends AbstractActionController
                 return new ViewModel([
                     'perfil' => $perfil,
                     'error' => 'El nombre del perfil es requerido',
+                    'modulos' => $this->getModulosParaSidebar(),
                     'breadcrumbs' => [
                         ['nombre' => 'Inicio', 'url' => '/'],
                         ['nombre' => 'Seguridad', 'url' => null],
@@ -172,6 +175,7 @@ class SecurityController extends AbstractActionController
 
         return new ViewModel([
             'perfil' => $perfil,
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
@@ -191,6 +195,7 @@ class SecurityController extends AbstractActionController
 
         return new ViewModel([
             'error' => 'No se puede eliminar este perfil. Verifique que no haya usuarios asignados.',
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
@@ -211,6 +216,7 @@ class SecurityController extends AbstractActionController
 
         return new ViewModel([
             'perfil' => $perfil,
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
@@ -233,6 +239,7 @@ class SecurityController extends AbstractActionController
         $pages = ceil($total / $limit);
 
         return new ViewModel([
+            'modulos_sidebar' => $this->getModulosParaSidebar(),
             'modulos' => $modulos,
             'page' => $page,
             'pages' => $pages,
@@ -255,6 +262,7 @@ class SecurityController extends AbstractActionController
             if (empty($data['str_nombre_modulo'])) {
                 return new ViewModel([
                     'error' => 'El nombre del módulo es requerido',
+                    'modulos' => $this->getModulosParaSidebar(),
                     'breadcrumbs' => [
                         ['nombre' => 'Inicio', 'url' => '/'],
                         ['nombre' => 'Seguridad', 'url' => null],
@@ -269,6 +277,7 @@ class SecurityController extends AbstractActionController
         }
 
         return new ViewModel([
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
@@ -296,6 +305,7 @@ class SecurityController extends AbstractActionController
                 return new ViewModel([
                     'modulo' => $modulo,
                     'error' => 'El nombre del módulo es requerido',
+                    'modulos' => $this->getModulosParaSidebar(),
                     'breadcrumbs' => [
                         ['nombre' => 'Inicio', 'url' => '/'],
                         ['nombre' => 'Seguridad', 'url' => null],
@@ -311,6 +321,7 @@ class SecurityController extends AbstractActionController
 
         return new ViewModel([
             'modulo' => $modulo,
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
@@ -330,6 +341,7 @@ class SecurityController extends AbstractActionController
 
         return new ViewModel([
             'error' => 'No se puede eliminar este módulo. Verifique que no tenga permisos o submódulos asociados.',
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
@@ -350,6 +362,7 @@ class SecurityController extends AbstractActionController
 
         return new ViewModel([
             'modulo' => $modulo,
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
@@ -376,6 +389,7 @@ class SecurityController extends AbstractActionController
             'page' => $page,
             'pages' => $pages,
             'total' => $total,
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
@@ -399,6 +413,7 @@ class SecurityController extends AbstractActionController
                     'error' => 'Los campos requeridos no pueden estar vacíos',
                     'perfiles' => $perfiles,
                     'estados' => $estados,
+                    'modulos' => $this->getModulosParaSidebar(),
                     'breadcrumbs' => [
                         ['nombre' => 'Inicio', 'url' => '/'],
                         ['nombre' => 'Seguridad', 'url' => null],
@@ -431,6 +446,7 @@ class SecurityController extends AbstractActionController
         return new ViewModel([
             'perfiles' => $perfiles,
             'estados' => $estados,
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
@@ -462,6 +478,7 @@ class SecurityController extends AbstractActionController
                     'error' => 'Los campos requeridos no pueden estar vacíos',
                     'perfiles' => $perfiles,
                     'estados' => $estados,
+                    'modulos' => $this->getModulosParaSidebar(),
                     'breadcrumbs' => [
                         ['nombre' => 'Inicio', 'url' => '/'],
                         ['nombre' => 'Seguridad', 'url' => null],
@@ -495,6 +512,7 @@ class SecurityController extends AbstractActionController
             'usuario' => $usuario,
             'perfiles' => $perfiles,
             'estados' => $estados,
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
@@ -514,6 +532,7 @@ class SecurityController extends AbstractActionController
 
         return new ViewModel([
             'error' => 'No se puede eliminar este usuario.',
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
@@ -534,6 +553,7 @@ class SecurityController extends AbstractActionController
 
         return new ViewModel([
             'usuario' => $usuario,
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
@@ -560,6 +580,7 @@ class SecurityController extends AbstractActionController
             'page' => $page,
             'pages' => $pages,
             'total' => $total,
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
@@ -580,8 +601,9 @@ class SecurityController extends AbstractActionController
             if (empty($data['id_modulo']) || empty($data['id_perfil'])) {
                 return new ViewModel([
                     'error' => 'El módulo y perfil son requeridos',
-                    'modulos' => $modulos,
+                    'modulos_list' => $modulos,
                     'perfiles' => $perfiles,
+                    'modulos' => $this->getModulosParaSidebar(),
                     'breadcrumbs' => [
                         ['nombre' => 'Inicio', 'url' => '/'],
                         ['nombre' => 'Seguridad', 'url' => null],
@@ -596,8 +618,9 @@ class SecurityController extends AbstractActionController
         }
 
         return new ViewModel([
-            'modulos' => $modulos,
+            'modulos_list' => $modulos,
             'perfiles' => $perfiles,
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
@@ -629,8 +652,9 @@ class SecurityController extends AbstractActionController
 
         return new ViewModel([
             'permiso' => $permiso,
-            'modulos' => $modulos,
+            'modulos_list' => $modulos,
             'perfiles' => $perfiles,
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
@@ -650,6 +674,7 @@ class SecurityController extends AbstractActionController
 
         return new ViewModel([
             'error' => 'No se puede eliminar este permiso.',
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
@@ -670,6 +695,7 @@ class SecurityController extends AbstractActionController
 
         return new ViewModel([
             'permiso' => $permiso,
+            'modulos' => $this->getModulosParaSidebar(),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],

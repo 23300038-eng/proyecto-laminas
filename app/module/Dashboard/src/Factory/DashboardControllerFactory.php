@@ -6,12 +6,13 @@ namespace Dashboard\Factory;
 
 use Psr\Container\ContainerInterface;
 use Dashboard\Controller\DashboardController;
-use Laminas\ServiceManager\Factory\InvokableFactory;
+use Laminas\Db\Adapter\AdapterInterface;
 
 class DashboardControllerFactory
 {
     public function __invoke(ContainerInterface $container): DashboardController
     {
-        return new DashboardController();
+        $db = $container->get(AdapterInterface::class);
+        return new DashboardController($db);
     }
 }

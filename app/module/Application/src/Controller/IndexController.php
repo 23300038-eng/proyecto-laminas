@@ -19,9 +19,61 @@ class IndexController extends AbstractActionController
         $this->db = $db;
     }
 
+    /**
+     * Cargar módulos para el sidebar
+     */
+    private function getModulos(): array
+    {
+        try {
+            $modulos = [];
+            if (isset($this->db)) {
+                $resultado = $this->db->query('SELECT * FROM modulo WHERE bit_activo = true ORDER BY int_orden');
+                $modulosDb = $resultado->execute();
+                
+                $modulosAgrupados = [
+                    'Administración' => [],
+                    'Otros' => []
+                ];
+                
+                foreach ($modulosDb as $modulo) {
+                    $item = [
+                        'nombre' => $modulo['str_nombre_modulo'],
+                        'icono' => $modulo['str_icono'] ?? '',
+                        'url' => '#'
+                    ];
+                    
+                    $nombre = strtolower($modulo['str_nombre_modulo']);
+                    if (strpos($nombre, 'perfil') !== false) {
+                        $item['url'] = $this->url()->fromRoute('security', ['action' => 'perfil']);
+                        $modulosAgrupados['Administración'][] = $item;
+                    } elseif (strpos($nombre, 'usuario') !== false) {
+                        $item['url'] = $this->url()->fromRoute('security', ['action' => 'usuario']);
+                        $modulosAgrupados['Administración'][] = $item;
+                    } elseif (strpos($nombre, 'modulo') !== false) {
+                        $item['url'] = $this->url()->fromRoute('security', ['action' => 'modulo']);
+                        $modulosAgrupados['Administración'][] = $item;
+                    } elseif (strpos($nombre, 'permiso') !== false) {
+                        $item['url'] = $this->url()->fromRoute('security', ['action' => 'permisos-perfil']);
+                        $modulosAgrupados['Administración'][] = $item;
+                    } else {
+                        $modulosAgrupados['Otros'][] = $item;
+                    }
+                }
+                
+                return array_filter($modulosAgrupados, fn($items) => !empty($items));
+            }
+        } catch (\Exception $e) {
+            // Silenciar errores de carga de módulos
+        }
+        
+        return [];
+    }
+
     public function indexAction()
     {
-        return new ViewModel();
+        return new ViewModel([
+            'modulos' => $this->getModulos()
+        ]);
     }
 
     public function carruselAction()
@@ -66,6 +118,7 @@ class IndexController extends AbstractActionController
 
         return new ViewModel([
             'imagenes' => $imagenes,
+            'modulos' => $this->getModulos(),
         ]);
     }
 
@@ -79,6 +132,7 @@ class IndexController extends AbstractActionController
 
         return new ViewModel([
             'productos' => $result,
+            'modulos' => $this->getModulos(),
         ]);
     }
 
@@ -134,6 +188,11 @@ class IndexController extends AbstractActionController
             $viewModel->setVariables([
                 'success' => $success,
                 'message' => $message,
+                'modulos' => $this->getModulos(),
+            ]);
+        } else {
+            $viewModel->setVariables([
+                'modulos' => $this->getModulos(),
             ]);
         }
 
@@ -282,6 +341,7 @@ class IndexController extends AbstractActionController
             'perPage'    => $perPage,
             'total'      => $total,
             'totalPages' => $totalPages,
+            'modulos'    => $this->getModulos(),
         ]);
     }
 
@@ -431,7 +491,8 @@ public function editUsuarioAction()
     // Retornamos la vista con los datos del usuario
     return new ViewModel([
         'usuario' => $usuario,
-        'id'      => $id
+        'id'      => $id,
+        'modulos' => $this->getModulos()
     ]);
 }
 
@@ -521,6 +582,8 @@ public function updateUsuarioAction()
 
 
     public function addUsuarioAction(){
-        return new ViewModel();
+        return new ViewModel([
+            'modulos' => $this->getModulos()
+        ]);
     }
 }
