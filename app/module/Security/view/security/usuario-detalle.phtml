@@ -3,11 +3,6 @@
 </div>
 
 <div style="max-width: 600px; background: white; padding: 2rem; border-radius: 4px;">
-    <?php if (!empty($usuario['imagen'])): ?>
-        <div style="margin-bottom: 1.5rem; text-align: center;">
-            <img src="/<?php echo htmlspecialchars($usuario['imagen']); ?>" alt="<?php echo htmlspecialchars($usuario['str_nombre_usuario']); ?>" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover;">
-        </div>
-    <?php endif; ?>
 
     <div style="margin-bottom: 1.5rem;">
         <strong style="color: #666;">ID:</strong>
@@ -15,7 +10,7 @@
     </div>
 
     <div style="margin-bottom: 1.5rem;">
-        <strong style="color: #666;">Usuario:</strong>
+        <strong style="color: #666;">Nombre de Empleado:</strong>
         <p><?php echo htmlspecialchars($usuario['str_nombre_usuario']); ?></p>
     </div>
 

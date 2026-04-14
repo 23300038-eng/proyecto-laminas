@@ -1,0 +1,56 @@
+<?php if (!empty($breadcrumbs)): ?>
+    <ul class="breadcrumbs">
+        <?php foreach ($breadcrumbs as $breadcrumb): ?>
+            <li>
+                <?php if (!empty($breadcrumb['url'])): ?>
+                    <a href="<?= htmlspecialchars($breadcrumb['url']) ?>"><?= htmlspecialchars($breadcrumb['nombre']) ?></a>
+                <?php else: ?>
+                    <?= htmlspecialchars($breadcrumb['nombre']) ?>
+                <?php endif; ?>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+<?php endif; ?>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><?= htmlspecialchars($modulo['str_nombre_modulo'] ?? 'Módulo') ?></h1>
+        <p class="page-subtitle">Vista general generada dinámicamente para este módulo. Desde aquí puedes entrar a sus submódulos disponibles.</p>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1.4fr 1fr;gap:1.5rem;align-items:start;">
+    <section class="card">
+        <div class="card-header">
+            <h2 style="margin:0;font-size:1.1rem;">Resumen del módulo</h2>
+        </div>
+        <div class="card-body" style="display:grid;gap:1rem;line-height:1.7;">
+            <p style="margin:0;">Este espacio se creó de manera modular a partir de la base de datos. Si registras un módulo nuevo, el sistema puede mostrar automáticamente una vista como esta sin tener que programar una plantilla específica para cada caso.</p>
+            <p style="margin:0;">Aquí puedes colocar después información real del proceso que represente este módulo. Por ahora funciona como landing dinámica y punto de entrada a sus submódulos.</p>
+
+            <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+                <?php if (!empty($permisos_actuales['consulta'])): ?><span class="btn btn-secondary" style="cursor:default;">Ver</span><?php endif; ?>
+                <?php if (!empty($permisos_actuales['agregar'])): ?><span class="btn btn-primary" style="cursor:default;">Crear</span><?php endif; ?>
+                <?php if (!empty($permisos_actuales['editar'])): ?><span class="btn btn-secondary" style="cursor:default;">Editar</span><?php endif; ?>
+                <?php if (!empty($permisos_actuales['eliminar'])): ?><span class="btn btn-danger" style="cursor:default;">Eliminar</span><?php endif; ?>
+            </div>
+        </div>
+    </section>
+
+    <aside class="card">
+        <div class="card-header">
+            <h2 style="margin:0;font-size:1.1rem;">Submódulos visibles</h2>
+        </div>
+        <div class="card-body" style="display:grid;gap:0.75rem;">
+            <?php if (!empty($submodulos_accesibles)): ?>
+                <?php foreach ($submodulos_accesibles as $submodulo): ?>
+                    <a class="btn btn-outline" href="<?= htmlspecialchars(\Security\Support\AccessHelper::normalizeSubmoduleRoute($modulo['str_nombre_modulo'], $submodulo['str_nombre_submodulo'], $submodulo['str_ruta'] ?? '')) ?>">
+                        <?= htmlspecialchars($submodulo['str_nombre_submodulo']) ?>
+                    </a>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <span style="color:#64748b;">Este módulo no tiene submódulos visibles para tu perfil.</span>
+            <?php endif; ?>
+        </div>
+    </aside>
+</div>

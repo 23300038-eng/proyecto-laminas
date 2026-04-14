@@ -62,7 +62,9 @@ class UsuarioModel
         $sql = new Sql($this->db);
         
         $select = $sql->select('usuario')
-            ->where(['id' => $id]);
+            ->join('perfil', 'usuario.id_perfil = perfil.id', ['str_nombre_perfil'], 'left')
+            ->join('estado_usuario', 'usuario.id_estado_usuario = estado_usuario.id', ['str_nombre' => 'str_nombre'], 'left')
+            ->where(['usuario.id' => $id]);
 
         $stmt = $sql->prepareStatementForSqlObject($select);
         $result = $stmt->execute();
@@ -93,26 +95,37 @@ class UsuarioModel
      */
     public function createUsuario(array $data): int
     {
-        $sql = new Sql($this->db);
-        
-        // Hash de la contraseña
-        $hashedPassword = password_hash($data['str_pwd'] ?? '', PASSWORD_BCRYPT);
-        
-        $insert = $sql->insert('usuario')
-            ->values([
-                'str_nombre_usuario' => $data['str_nombre_usuario'] ?? null,
-                'id_perfil' => $data['id_perfil'] ?? null,
-                'str_pwd' => $hashedPassword,
-                'id_estado_usuario' => $data['id_estado_usuario'] ?? 1,
-                'str_correo' => $data['str_correo'] ?? null,
-                'str_numero_celular' => $data['str_numero_celular'] ?? null,
-                'imagen' => $data['imagen'] ?? null,
-            ]);
+        $hashedPassword = password_hash((string) ($data['str_pwd'] ?? ''), PASSWORD_BCRYPT);
+        $estadoUsuarioId = $this->resolveEstadoUsuarioId($data['id_estado_usuario'] ?? null);
 
-        $stmt = $sql->prepareStatementForSqlObject($insert);
-        $result = $stmt->execute();
+        $statement = $this->db->createStatement(
+            'INSERT INTO usuario (str_nombre_usuario, id_perfil, str_pwd, id_estado_usuario, str_correo, str_numero_celular, creado_en, actualizado_en)
+             VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+             RETURNING id',
+            [
+                trim((string) ($data['str_nombre_usuario'] ?? '')) !== '' ? trim((string) $data['str_nombre_usuario']) : null,
+                isset($data['id_perfil']) ? (int) $data['id_perfil'] : null,
+                $hashedPassword,
+                $estadoUsuarioId,
+                trim((string) ($data['str_correo'] ?? '')) !== '' ? trim((string) $data['str_correo']) : null,
+                trim((string) ($data['str_numero_celular'] ?? '')) !== '' ? trim((string) $data['str_numero_celular']) : null,
+            ]
+        );
 
-        return $this->db->getDriver()->getLastGeneratedValue();
+        $result = $statement->execute();
+        $row = $result->current();
+        $id = (int) (($row['id'] ?? $row[0] ?? 0));
+
+        if ($id > 0) {
+            return $id;
+        }
+
+        $fallbackId = (int) $this->db->getDriver()->getLastGeneratedValue();
+        if ($fallbackId > 0) {
+            return $fallbackId;
+        }
+
+        throw new \RuntimeException('No se pudo obtener el ID del usuario creado.');
     }
 
     /**
@@ -125,7 +138,7 @@ class UsuarioModel
         $updateData = [
             'str_nombre_usuario' => $data['str_nombre_usuario'] ?? null,
             'id_perfil' => $data['id_perfil'] ?? null,
-            'id_estado_usuario' => $data['id_estado_usuario'] ?? null,
+            'id_estado_usuario' => $this->resolveEstadoUsuarioId($data['id_estado_usuario'] ?? null),
             'str_correo' => $data['str_correo'] ?? null,
             'str_numero_celular' => $data['str_numero_celular'] ?? null,
             'actualizado_en' => new Expression('CURRENT_TIMESTAMP'),
@@ -136,10 +149,6 @@ class UsuarioModel
             $updateData['str_pwd'] = password_hash($data['str_pwd'], PASSWORD_BCRYPT);
         }
 
-        // Solo actualizar imagen si se proporciona
-        if (!empty($data['imagen'])) {
-            $updateData['imagen'] = $data['imagen'];
-        }
 
         $update = $sql->update('usuario')
             ->set($updateData)
@@ -172,6 +181,33 @@ class UsuarioModel
 
         return $result->getAffectedRows() > 0;
     }
+
+    private function resolveEstadoUsuarioId($rawValue): int
+    {
+        $candidate = (int) $rawValue;
+        if ($candidate > 0) {
+            $stmt = $this->db->createStatement('SELECT id FROM estado_usuario WHERE id = ? LIMIT 1', [$candidate]);
+            $row = $stmt->execute()->current();
+            if ($row && (int) ($row['id'] ?? 0) > 0) {
+                return (int) $row['id'];
+            }
+        }
+
+        $stmt = $this->db->createStatement("SELECT id FROM estado_usuario WHERE LOWER(str_nombre) = 'activo' ORDER BY id ASC LIMIT 1");
+        $row = $stmt->execute()->current();
+        if ($row && (int) ($row['id'] ?? 0) > 0) {
+            return (int) $row['id'];
+        }
+
+        $stmt = $this->db->createStatement('SELECT id FROM estado_usuario ORDER BY id ASC LIMIT 1');
+        $row = $stmt->execute()->current();
+        if ($row && (int) ($row['id'] ?? 0) > 0) {
+            return (int) $row['id'];
+        }
+
+        throw new \RuntimeException('No existe un estado de usuario válido para guardar el registro.');
+    }
+
 
     /**
      * Obtener todos los perfiles para dropdown

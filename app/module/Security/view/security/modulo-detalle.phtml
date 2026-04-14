@@ -1,40 +1,8 @@
-<div class="page-header">
-    <h2>Detalle del Módulo</h2>
-</div>
-
-<div style="max-width: 600px; background: white; padding: 2rem; border-radius: 4px;">
-    <div style="margin-bottom: 1.5rem;">
-        <strong style="color: #666;">ID:</strong>
-        <p><?php echo htmlspecialchars($modulo['id']); ?></p>
-    </div>
-
-    <div style="margin-bottom: 1.5rem;">
-        <strong style="color: #666;">Nombre:</strong>
-        <p><?php echo htmlspecialchars($modulo['str_nombre_modulo']); ?></p>
-    </div>
-
-    <div style="margin-bottom: 1.5rem;">
-        <strong style="color: #666;">Icono:</strong>
-        <p><?php echo htmlspecialchars($modulo['str_icono'] ?? 'Sin icono'); ?></p>
-    </div>
-
-    <div style="margin-bottom: 1.5rem;">
-        <strong style="color: #666;">Orden:</strong>
-        <p><?php echo htmlspecialchars($modulo['int_orden']); ?></p>
-    </div>
-
-    <div style="margin-bottom: 1.5rem;">
-        <strong style="color: #666;">Activo:</strong>
-        <p><?php echo $modulo['bit_activo'] ? 'Sí' : 'No'; ?></p>
-    </div>
-
-    <div style="margin-bottom: 1.5rem;">
-        <strong style="color: #666;">Creado en:</strong>
-        <p><?php echo htmlspecialchars($modulo['creado_en'] ?? ''); ?></p>
-    </div>
-
-    <div class="btn-group">
-        <a href="/security/modulo-edit/<?php echo $modulo['id']; ?>" class="btn btn-primary">Editar</a>
-        <a href="/security/modulo" class="btn btn-secondary">Volver</a>
-    </div>
-</div>
+<?php if (!empty($breadcrumbs)): ?><ul class="breadcrumbs"><?php foreach ($breadcrumbs as $breadcrumb): ?><li><?php if (!empty($breadcrumb['url'])): ?><a href="<?= htmlspecialchars($breadcrumb['url']) ?>"><?= htmlspecialchars($breadcrumb['nombre']) ?></a><?php else: ?><?= htmlspecialchars($breadcrumb['nombre']) ?><?php endif; ?></li><?php endforeach; ?></ul><?php endif; ?>
+<?php if (!empty($error)): ?><div style="margin-bottom:1rem;padding:0.95rem 1rem;border:1px solid #fecaca;background:#fef2f2;color:#b91c1c;border-radius:12px;"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+<div class="page-header"><div><h1 class="page-title">Detalle del Módulo</h1><p class="page-subtitle">Resumen general del módulo y sus submódulos asociados.</p></div></div>
+<?php if (!empty($modulo)): ?>
+<div class="card" style="margin-bottom:1rem;"><div class="card-body" style="display:grid;gap:0.7rem;"><div><strong>Nombre:</strong> <?= htmlspecialchars($modulo['str_nombre_modulo'] ?? '') ?></div><div><strong>Ícono:</strong> <?= htmlspecialchars($modulo['str_icono'] ?? '') ?></div><div><strong>Orden:</strong> <?= (int) ($modulo['int_orden'] ?? 0) ?></div><div><strong>Activo:</strong> <?= !empty($modulo['bit_activo']) ? 'Sí' : 'No' ?></div><div><strong>Total submódulos:</strong> <?= (int) ($modulo['total_submodulos'] ?? 0) ?></div><div><strong>Landing dinámica:</strong> <code>/modulos/<?= htmlspecialchars(\Security\Support\AccessHelper::slugify($modulo['str_nombre_modulo'] ?? '')) ?></code></div></div></div>
+<div class="card"><div class="card-header"><h2 style="margin:0;font-size:1.05rem;">Submódulos del módulo</h2></div><div class="card-body"><?php if (!empty($submodulos)): ?><ul style="margin:0;padding-left:1.1rem;display:grid;gap:0.45rem;"><?php foreach ($submodulos as $submodulo): ?><li><?= htmlspecialchars($submodulo['str_nombre_submodulo']) ?> — <code><?= htmlspecialchars($submodulo['str_ruta'] ?? '') ?></code></li><?php endforeach; ?></ul><?php else: ?><p style="margin:0;color:#64748b;">Este módulo aún no tiene submódulos activos.</p><?php endif; ?></div></div>
+<?php endif; ?>
+<div style="margin-top:1rem;display:flex;gap:0.75rem;flex-wrap:wrap;"><a href="/security/modulo" class="btn btn-secondary">Volver</a><?php if (!empty($modulo)): ?><a href="/security/submodulo?modulo=<?= (int) $modulo['id'] ?>" class="btn btn-outline">Gestionar submódulos</a><?php endif; ?></div>

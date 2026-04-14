@@ -1,25 +1,43 @@
-<div class="page-header">
-    <h2>Editar Perfil</h2>
-</div>
-
-<form method="POST" style="max-width: 600px;">
-    <div class="form-group">
-        <label for="str_nombre_perfil">Nombre del Perfil *</label>
-        <input type="text" id="str_nombre_perfil" name="str_nombre_perfil" required placeholder="Ej: Gerente, Empleado" value="<?php echo htmlspecialchars($perfil['str_nombre_perfil'] ?? ''); ?>">
-    </div>
-
-    <div class="form-group">
-        <label for="descripcion">Descripción</label>
-        <textarea id="descripcion" name="descripcion" placeholder="Describa el propósito de este perfil"><?php echo htmlspecialchars($perfil['descripcion'] ?? ''); ?></textarea>
-    </div>
-
-    <div class="form-check">
-        <input type="checkbox" id="bit_administrador" name="bit_administrador" value="1" <?php echo ($perfil['bit_administrador'] ?? false) ? 'checked' : ''; ?>>
-        <label for="bit_administrador">¿Es administrador?</label>
-    </div>
-
-    <div class="btn-group" style="margin-top: 2rem;">
-        <button type="submit" class="btn btn-primary">Actualizar</button>
-        <a href="/security/perfil" class="btn btn-secondary">Cancelar</a>
+<?php $permisos = $permisos_indexados ?? ['modulos' => [], 'submodulos' => []]; ?>
+<?php if (!empty($breadcrumbs)): ?><ul class="breadcrumbs"><?php foreach ($breadcrumbs as $breadcrumb): ?><li><?php if (!empty($breadcrumb['url'])): ?><a href="<?= htmlspecialchars($breadcrumb['url']) ?>"><?= htmlspecialchars($breadcrumb['nombre']) ?></a><?php else: ?><?= htmlspecialchars($breadcrumb['nombre']) ?><?php endif; ?></li><?php endforeach; ?></ul><?php endif; ?>
+<div class="page-header"><div><h1 class="page-title">Editar Perfil</h1><p class="page-subtitle">Actualiza el perfil y ajusta sus permisos por módulo y submódulo.</p></div></div>
+<?php if (!empty($error)): ?><div style="margin-bottom:1rem;padding:0.95rem 1rem;border:1px solid #fecaca;background:#fef2f2;color:#b91c1c;border-radius:12px;"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+<form method="POST" class="card">
+    <div class="card-body" style="display:grid;gap:1.25rem;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group" style="margin:0;"><label class="form-label" for="str_nombre_perfil">Nombre del perfil *</label><input class="form-control" type="text" id="str_nombre_perfil" name="str_nombre_perfil" required value="<?= htmlspecialchars($perfil['str_nombre_perfil'] ?? '') ?>"></div>
+            <div class="form-group" style="margin:0;"><label class="form-label" for="descripcion">Descripción</label><input class="form-control" type="text" id="descripcion" name="descripcion" value="<?= htmlspecialchars($perfil['descripcion'] ?? '') ?>"></div>
+        </div>
+        <div>
+            <h2 style="margin:0 0 0.9rem;font-size:1.05rem;">Matriz de permisos</h2>
+            <div style="overflow:auto;border:1px solid #e2e8f0;border-radius:14px;">
+                <table class="table" style="margin:0;">
+                    <thead><tr><th>Recurso</th><th>Ver</th><th>Crear</th><th>Editar</th><th>Eliminar</th></tr></thead>
+                    <tbody>
+                        <?php foreach ($matrix as $modulo): ?>
+                            <?php $mid=(int)$modulo['id']; $mb=$permisos['modulos'][$mid] ?? []; ?>
+                            <tr style="background:#f8fafc;font-weight:700;">
+                                <td><?= htmlspecialchars($modulo['str_nombre_modulo']) ?> <span style="color:#64748b;font-weight:400;">(módulo)</span></td>
+                                <td><input type="checkbox" name="permisos[modulos][<?= $mid ?>][consulta]" value="1" <?= !empty($mb['consulta']) ? 'checked' : '' ?>></td>
+                                <td><input type="checkbox" name="permisos[modulos][<?= $mid ?>][agregar]" value="1" <?= !empty($mb['agregar']) ? 'checked' : '' ?>></td>
+                                <td><input type="checkbox" name="permisos[modulos][<?= $mid ?>][editar]" value="1" <?= !empty($mb['editar']) ? 'checked' : '' ?>></td>
+                                <td><input type="checkbox" name="permisos[modulos][<?= $mid ?>][eliminar]" value="1" <?= !empty($mb['eliminar']) ? 'checked' : '' ?>></td>
+                            </tr>
+                            <?php foreach (($modulo['submodulos'] ?? []) as $submodulo): ?>
+                                <?php $sid=(int)$submodulo['id']; $sb=$permisos['submodulos'][$sid] ?? []; ?>
+                                <tr>
+                                    <td style="padding-left:2rem;">↳ <?= htmlspecialchars($submodulo['str_nombre_submodulo']) ?> <span style="color:#64748b;">(submódulo)</span></td>
+                                    <td><input type="checkbox" name="permisos[submodulos][<?= $sid ?>][consulta]" value="1" <?= !empty($sb['consulta']) ? 'checked' : '' ?>></td>
+                                    <td><input type="checkbox" name="permisos[submodulos][<?= $sid ?>][agregar]" value="1" <?= !empty($sb['agregar']) ? 'checked' : '' ?>></td>
+                                    <td><input type="checkbox" name="permisos[submodulos][<?= $sid ?>][editar]" value="1" <?= !empty($sb['editar']) ? 'checked' : '' ?>></td>
+                                    <td><input type="checkbox" name="permisos[submodulos][<?= $sid ?>][eliminar]" value="1" <?= !empty($sb['eliminar']) ? 'checked' : '' ?>></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="btn-group"><button type="submit" class="btn btn-primary">Actualizar perfil</button><a href="/security/perfil" class="btn btn-secondary">Cancelar</a></div>
     </div>
 </form>

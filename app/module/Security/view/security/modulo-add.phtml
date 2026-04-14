@@ -1,32 +1,9 @@
-<div class="page-header">
-    <h2>Crear Nuevo Módulo</h2>
-</div>
-
-<form method="POST" style="max-width: 600px;">
-    <div class="form-group">
-        <label for="str_nombre_modulo">Nombre del Módulo *</label>
-        <input type="text" id="str_nombre_modulo" name="str_nombre_modulo" required placeholder="Ej: Inventario, Reportes">
-    </div>
-
-    <div class="form-row">
-        <div class="form-group">
-            <label for="str_icono">Icono</label>
-            <input type="text" id="str_icono" name="str_icono" placeholder="Ej: lock, home, cog">
-        </div>
-
-        <div class="form-group">
-            <label for="int_orden">Orden</label>
-            <input type="number" id="int_orden" name="int_orden" value="0" placeholder="Ej: 1, 2, 3">
-        </div>
-    </div>
-
-    <div class="form-check">
-        <input type="checkbox" id="bit_activo" name="bit_activo" value="1" checked>
-        <label for="bit_activo">¿Activo?</label>
-    </div>
-
-    <div class="btn-group" style="margin-top: 2rem;">
-        <button type="submit" class="btn btn-primary">Guardar</button>
-        <a href="/security/modulo" class="btn btn-secondary">Cancelar</a>
-    </div>
-</form>
+<?php if (!empty($breadcrumbs)): ?><ul class="breadcrumbs"><?php foreach ($breadcrumbs as $breadcrumb): ?><li><?php if (!empty($breadcrumb['url'])): ?><a href="<?= htmlspecialchars($breadcrumb['url']) ?>"><?= htmlspecialchars($breadcrumb['nombre']) ?></a><?php else: ?><?= htmlspecialchars($breadcrumb['nombre']) ?><?php endif; ?></li><?php endforeach; ?></ul><?php endif; ?>
+<div class="page-header"><div><h1 class="page-title">Crear Módulo</h1><p class="page-subtitle">Al guardar, el sistema podrá generar su landing dinámica automáticamente.</p></div></div>
+<?php if (!empty($error)): ?><div style="margin-bottom:1rem;padding:0.95rem 1rem;border:1px solid #fecaca;background:#fef2f2;color:#b91c1c;border-radius:12px;"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+<form method="POST" class="card"><div class="card-body" style="max-width:720px;display:grid;gap:1rem;">
+<div class="form-group" style="margin:0;"><label class="form-label" for="str_nombre_modulo">Nombre del módulo *</label><input class="form-control" type="text" id="str_nombre_modulo" name="str_nombre_modulo" required value="<?= htmlspecialchars($_POST['str_nombre_modulo'] ?? '') ?>"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;"><div class="form-group" style="margin:0;"><label class="form-label" for="str_icono">Ícono</label><input class="form-control" type="text" id="str_icono" name="str_icono" value="<?= htmlspecialchars($_POST['str_icono'] ?? '') ?>"></div><div class="form-group" style="margin:0;"><label class="form-label" for="int_orden">Orden</label><input class="form-control" type="number" id="int_orden" name="int_orden" value="<?= htmlspecialchars($_POST['int_orden'] ?? '0') ?>"></div></div>
+<label style="display:flex;gap:0.5rem;align-items:center;"><input type="checkbox" name="bit_activo" value="1" <?= isset($_POST['bit_activo']) || !$_POST ? 'checked' : '' ?>> Activo</label>
+<div class="btn-group"><button type="submit" class="btn btn-primary">Guardar módulo</button><a href="/security/modulo" class="btn btn-secondary">Cancelar</a></div>
+</div></form>

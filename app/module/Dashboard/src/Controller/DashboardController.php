@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Dashboard\Controller;
 
+use Laminas\Db\Adapter\AdapterInterface;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\ViewModel;
-use Laminas\Db\Adapter\AdapterInterface;
+use Security\Support\AccessHelper;
 
 class DashboardController extends AbstractActionController
 {
@@ -17,147 +18,114 @@ class DashboardController extends AbstractActionController
         $this->db = $db;
     }
 
-    /**
-     * Construye el menú dinámico filtrando por permisos del usuario.
-     * - Administrador: ve todos los módulos activos.
-     * - No-admin: solo ve módulos donde su perfil tenga al menos un permiso.
-     */
-/**
-     * Menú dinámico usando tabla modulo + submodulo, filtrado por permisos.
-     */
-    private function getModulosParaMenu(): array
-    {
-        if (session_status() === PHP_SESSION_NONE) session_start();
-        $esAdmin   = !empty($_SESSION['bit_administrador']);
-        $permisos  = $_SESSION['permisos'] ?? [];
-
-        // IDs de módulos permitidos
-        $permitidos = null;
-        if (!$esAdmin) {
-            $permitidos = [];
-            foreach ($permisos as $idM => $bits) {
-                if ($bits['agregar'] || $bits['editar'] || $bits['consulta'] || $bits['eliminar'] || $bits['detalle']) {
-                    $permitidos[] = (int)$idM;
-                }
-            }
-        }
-
-        // Rutas estáticas para submodulos de Seguridad
-        $rutasSeguridad = [
-            'perfil'          => '/security/perfil',
-            'módulo'          => '/security/modulo',
-            'modulo'          => '/security/modulo',
-            'permisos-perfil' => '/security/permiso-perfil',
-            'permisos'        => '/security/permiso-perfil',
-            'permiso'         => '/security/permiso-perfil',
-            'usuario'         => '/security/usuario',
-        ];
-
-        try {
-            $sqlMod = "SELECT id, str_nombre_modulo, str_icono FROM modulo WHERE bit_activo = true ORDER BY int_orden ASC";
-            $modulos = iterator_to_array($this->db->query($sqlMod, []));
-
-            $menu = [];
-            foreach ($modulos as $m) {
-                $idMod = (int)$m['id'];
-                // Filtrar si no tiene permiso
-                if ($permitidos !== null && !in_array($idMod, $permitidos, true)) {
-                    continue;
-                }
-
-                // Obtener submodulos
-                $sqlSub = "SELECT id, str_nombre_submodulo, str_ruta FROM submodulo WHERE id_modulo = ? AND bit_activo = true ORDER BY int_orden ASC";
-                $subs   = iterator_to_array($this->db->query($sqlSub, [$idMod]));
-
-                $items = [];
-                foreach ($subs as $sub) {
-                    $ruta  = $sub['str_ruta'] ?? '#';
-                    $nombre = $sub['str_nombre_submodulo'];
-                    // Intentar ruta estática para seguridad
-                    $key = strtolower($nombre);
-                    foreach ($rutasSeguridad as $k => $r) {
-                        if (strpos($key, $k) !== false) {
-                            $ruta = $r;
-                            break;
-                        }
-                    }
-                    $items[] = ['nombre' => $nombre, 'url' => $ruta, 'icono' => ''];
-                }
-
-                if (!empty($items)) {
-                    $menu[$m['str_nombre_modulo']] = $items;
-                }
-            }
-            return $menu;
-        } catch (\Exception $e) {
-            return [];
-        }
-    }
-
     public function indexAction()
     {
+        $dashboardModuleId = AccessHelper::getModuleIdByName($this->db, 'Panel de Control');
+        $canViewDashboard = $dashboardModuleId !== null
+            ? AccessHelper::hasModulePermissionById($dashboardModuleId, 'consulta')
+            : AccessHelper::isAdmin();
+
+        if (!$canViewDashboard) {
+            return $this->redirect()->toRoute('home');
+        }
+
         return new ViewModel([
-            'modulos'     => $this->getModulosParaMenu(),
+            'titulo' => 'Panel de Control',
+            'menu_modulos' => AccessHelper::buildMenu($this->db),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
-                ['nombre' => 'Dashboard', 'url' => null],
+                ['nombre' => 'Panel de Control', 'url' => null],
             ],
+            'estadisticas' => [
+                'usuarios' => $this->count('usuario'),
+                'modulos' => $this->count('modulo'),
+                'submodulos' => $this->count('submodulo'),
+                'perfiles' => $this->count('perfil'),
+            ],
+            'usuarios_recientes' => $this->getUsuariosRecientes(),
         ]);
     }
 
     public function principal1Item1Action()
     {
-        return new ViewModel([
-            'titulo'      => 'Principal 1.1',
-            'descripcion' => 'Módulo de demostración',
-            'modulos'     => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
-                ['nombre' => 'Inicio', 'url' => '/'],
-                ['nombre' => 'Principal 1', 'url' => null],
-                ['nombre' => 'Principal 1.1', 'url' => null],
-            ],
-        ]);
+        return $this->renderModuloDemo(
+            'Principal 1.1',
+            'Vista operativa de ejemplo del módulo Principal 1. Se mantiene visible solo para perfiles con acceso al módulo.'
+        );
     }
 
     public function principal1Item2Action()
     {
-        return new ViewModel([
-            'titulo'      => 'Principal 1.2',
-            'descripcion' => 'Módulo de demostración',
-            'modulos'     => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
-                ['nombre' => 'Inicio', 'url' => '/'],
-                ['nombre' => 'Principal 1', 'url' => null],
-                ['nombre' => 'Principal 1.2', 'url' => null],
-            ],
-        ]);
+        return $this->renderModuloDemo(
+            'Principal 1.2',
+            'Sección complementaria de ejemplo para el módulo Principal 1, diseñada para demostrar navegación y permisos.'
+        );
     }
 
     public function principal2Item1Action()
     {
-        return new ViewModel([
-            'titulo'      => 'Principal 2.1',
-            'descripcion' => 'Módulo de demostración',
-            'modulos'     => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
-                ['nombre' => 'Inicio', 'url' => '/'],
-                ['nombre' => 'Principal 2', 'url' => null],
-                ['nombre' => 'Principal 2.1', 'url' => null],
-            ],
-        ]);
+        return $this->renderModuloDemo(
+            'Principal 2.1',
+            'Vista demostrativa del módulo Principal 2 para probar accesos, layout y navegación dinámica desde la base de datos.'
+        );
     }
 
     public function principal2Item2Action()
     {
+        return $this->renderModuloDemo(
+            'Principal 2.2',
+            'Pantalla de ejemplo del segundo módulo principal. Su acceso depende del perfil asignado al usuario actual.'
+        );
+    }
+
+    private function renderModuloDemo(string $titulo, string $descripcion): ViewModel
+    {
         return new ViewModel([
-            'titulo'      => 'Principal 2.2',
-            'descripcion' => 'Módulo de demostración',
-            'modulos'     => $this->getModulosParaMenu(),
+            'titulo' => $titulo,
+            'descripcion' => $descripcion,
+            'menu_modulos' => AccessHelper::buildMenu($this->db),
             'breadcrumbs' => [
                 ['nombre' => 'Inicio', 'url' => '/'],
-                ['nombre' => 'Principal 2', 'url' => null],
-                ['nombre' => 'Principal 2.2', 'url' => null],
+                ['nombre' => $titulo, 'url' => null],
             ],
         ]);
+    }
+
+    private function count(string $table, string $where = '1=1'): int
+    {
+        try {
+            $row = $this->db->query(
+                sprintf('SELECT COUNT(*) AS total FROM %s WHERE %s', $table, $where),
+                []
+            )->current();
+
+            return (int) ($row['total'] ?? 0);
+        } catch (\Throwable $exception) {
+            return 0;
+        }
+    }
+
+    private function getUsuariosRecientes(): array
+    {
+        try {
+            $result = $this->db->query(
+                'SELECT 
+                    u.id,
+                    u.str_nombre_usuario,
+                    u.str_correo,
+                    p.str_nombre_perfil,
+                    e.str_nombre AS str_nombre_estado
+                 FROM usuario u
+                 INNER JOIN perfil p ON p.id = u.id_perfil
+                 LEFT JOIN estado_usuario e ON e.id = u.id_estado_usuario
+                 ORDER BY u.creado_en DESC
+                 LIMIT 5',
+                []
+            );
+
+            return array_values(iterator_to_array($result));
+        } catch (\Throwable $exception) {
+            return [];
+        }
     }
 }

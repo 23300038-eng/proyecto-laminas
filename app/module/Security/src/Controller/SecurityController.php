@@ -4,19 +4,22 @@ declare(strict_types=1);
 
 namespace Security\Controller;
 
+use Laminas\Db\Adapter\AdapterInterface;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\ViewModel;
-use Laminas\Db\Adapter\AdapterInterface;
 use Security\Model\ModuloModel;
 use Security\Model\PerfilModel;
 use Security\Model\PermisoPerfilModel;
+use Security\Model\SubmoduloModel;
 use Security\Model\UsuarioModel;
+use Security\Support\AccessHelper;
 
 class SecurityController extends AbstractActionController
 {
     private AdapterInterface $db;
     private PerfilModel $perfilModel;
     private ModuloModel $moduloModel;
+    private SubmoduloModel $submoduloModel;
     private UsuarioModel $usuarioModel;
     private PermisoPerfilModel $permisoPerfilModel;
 
@@ -24,753 +27,800 @@ class SecurityController extends AbstractActionController
         AdapterInterface $db,
         PerfilModel $perfilModel,
         ModuloModel $moduloModel,
+        SubmoduloModel $submoduloModel,
         UsuarioModel $usuarioModel,
         PermisoPerfilModel $permisoPerfilModel
     ) {
-        $this->db                = $db;
-        $this->perfilModel       = $perfilModel;
-        $this->moduloModel       = $moduloModel;
-        $this->usuarioModel      = $usuarioModel;
+        $this->db = $db;
+        $this->perfilModel = $perfilModel;
+        $this->moduloModel = $moduloModel;
+        $this->submoduloModel = $submoduloModel;
+        $this->usuarioModel = $usuarioModel;
         $this->permisoPerfilModel = $permisoPerfilModel;
     }
 
-    /**
-     * Menú dinámico filtrado por permisos del usuario en sesión.
-     */
-/**
-     * Menú dinámico usando tabla modulo + submodulo, filtrado por permisos.
-     */
-    private function getModulosParaMenu(): array
+    public function indexAction()
     {
-        if (session_status() === PHP_SESSION_NONE) session_start();
-        $esAdmin   = !empty($_SESSION['bit_administrador']);
-        $permisos  = $_SESSION['permisos'] ?? [];
-
-        // IDs de módulos permitidos
-        $permitidos = null;
-        if (!$esAdmin) {
-            $permitidos = [];
-            foreach ($permisos as $idM => $bits) {
-                if ($bits['agregar'] || $bits['editar'] || $bits['consulta'] || $bits['eliminar'] || $bits['detalle']) {
-                    $permitidos[] = (int)$idM;
-                }
-            }
-        }
-
-        // Rutas estáticas para submodulos de Seguridad
-        $rutasSeguridad = [
-            'perfil'          => '/security/perfil',
-            'módulo'          => '/security/modulo',
-            'modulo'          => '/security/modulo',
-            'permisos-perfil' => '/security/permiso-perfil',
-            'permisos'        => '/security/permiso-perfil',
-            'permiso'         => '/security/permiso-perfil',
-            'usuario'         => '/security/usuario',
-        ];
-
-        try {
-            $sqlMod = "SELECT id, str_nombre_modulo, str_icono FROM modulo WHERE bit_activo = true ORDER BY int_orden ASC";
-            $modulos = iterator_to_array($this->db->query($sqlMod, []));
-
-            $menu = [];
-            foreach ($modulos as $m) {
-                $idMod = (int)$m['id'];
-                // Filtrar si no tiene permiso
-                if ($permitidos !== null && !in_array($idMod, $permitidos, true)) {
-                    continue;
-                }
-
-                // Obtener submodulos
-                $sqlSub = "SELECT id, str_nombre_submodulo, str_ruta FROM submodulo WHERE id_modulo = ? AND bit_activo = true ORDER BY int_orden ASC";
-                $subs   = iterator_to_array($this->db->query($sqlSub, [$idMod]));
-
-                $items = [];
-                foreach ($subs as $sub) {
-                    $ruta  = $sub['str_ruta'] ?? '#';
-                    $nombre = $sub['str_nombre_submodulo'];
-                    // Intentar ruta estática para seguridad
-                    $key = strtolower($nombre);
-                    foreach ($rutasSeguridad as $k => $r) {
-                        if (strpos($key, $k) !== false) {
-                            $ruta = $r;
-                            break;
-                        }
-                    }
-                    $items[] = ['nombre' => $nombre, 'url' => $ruta, 'icono' => ''];
-                }
-
-                if (!empty($items)) {
-                    $menu[$m['str_nombre_modulo']] = $items;
-                }
-            }
-            return $menu;
-        } catch (\Exception $e) {
-            return [];
-        }
+        return $this->redirect()->toRoute('security', ['action' => 'perfil']);
     }
-
-    /**
-     * Devuelve los permisos del usuario actual para un módulo por nombre (búsqueda flexible).
-     * Útil para ocultar/mostrar botones CRUD en las vistas.
-     */
-    private function getPermisosModulo(string $nombreModulo): array
-    {
-        if (session_status() === PHP_SESSION_NONE) session_start();
-        if (!empty($_SESSION['bit_administrador'])) {
-            return ['agregar'=>true,'editar'=>true,'consulta'=>true,'eliminar'=>true,'detalle'=>true];
-        }
-        $permisos = $_SESSION['permisos'] ?? [];
-        // Buscar por nombre de módulo en DB
-        try {
-            $sql    = "SELECT id FROM modulo WHERE LOWER(str_nombre_modulo) LIKE LOWER(?) LIMIT 1";
-            $result = $this->db->query($sql, ['%' . $nombreModulo . '%'])->current();
-            if ($result && isset($permisos[(int)$result['id']])) {
-                return $permisos[(int)$result['id']];
-            }
-        } catch (\Exception $e) {}
-        return ['agregar'=>false,'editar'=>false,'consulta'=>false,'eliminar'=>false,'detalle'=>false];
-    }
-
-// ==================== PERFIL ====================
 
     public function perfilAction()
     {
-        $page = (int)$this->params()->fromQuery('page', 1);
+        $page = max(1, (int) $this->params()->fromQuery('page', 1));
         $limit = 5;
         $offset = ($page - 1) * $limit;
-
-        $perfiles = $this->perfilModel->getPerfiles($limit, $offset);
         $total = $this->perfilModel->getPerfilesTotal();
-        $pages = ceil($total / $limit);
 
-        return new ViewModel([
-            'perfiles' => $perfiles,
+        return $this->render('security/perfil', [
+            'perfiles' => $this->perfilModel->getPerfiles($limit, $offset),
             'page' => $page,
-            'pages' => $pages,
-            'total' => $total,
-            'permisos_modulo' => $this->getPermisosModulo('perfil'),
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+            'pages' => (int) ceil($total / max(1, $limit)),
+            'permisos_modulo' => $this->getPermisosRuta('/security/perfil'),
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Perfil', 'url' => null],
-            ],
+            ]),
         ]);
     }
 
     public function perfilAddAction()
     {
         $request = $this->getRequest();
+        $error = null;
+        $matrix = $this->permisoPerfilModel->getModulosActivosConSubmodulos();
+        $permisosIndexados = ['modulos' => [], 'submodulos' => []];
 
         if ($request->isPost()) {
             $data = $request->getPost()->toArray();
+            $nombre = trim((string) ($data['str_nombre_perfil'] ?? ''));
 
-            // Validaciones básicas
-            if (empty($data['str_nombre_perfil'])) {
-                return new ViewModel([
-                    'error' => 'El nombre del perfil es requerido',
-                    'modulos' => $this->getModulosParaMenu(),
-                    'breadcrumbs' => [
-                        ['nombre' => 'Inicio', 'url' => '/'],
-                        ['nombre' => 'Seguridad', 'url' => null],
-                        ['nombre' => 'Perfil', 'url' => '/security/perfil'],
-                        ['nombre' => 'Crear', 'url' => null],
-                    ],
-                ]);
+            if ($nombre === '') {
+                $error = 'El nombre del perfil es obligatorio.';
+            } else {
+                try {
+                    $connection = $this->db->getDriver()->getConnection();
+                    $connection->beginTransaction();
+
+                    $perfilId = $this->perfilModel->createPerfil([
+                        'str_nombre_perfil' => $nombre,
+                        'descripcion' => trim((string) ($data['descripcion'] ?? '')),
+                    ]);
+
+                    if ($perfilId <= 0) {
+                        throw new \RuntimeException('No se pudo obtener el ID del perfil recién creado.');
+                    }
+
+                    $this->permisoPerfilModel->savePermisosByPerfil($perfilId, $data['permisos'] ?? []);
+                    $connection->commit();
+
+                    return $this->redirect()->toRoute('security', ['action' => 'perfil']);
+                } catch (\Throwable $exception) {
+                    if (isset($connection)) {
+                        try {
+                            $connection->rollback();
+                        } catch (\Throwable $rollbackException) {
+                        }
+                    }
+                    $error = 'No fue posible crear el perfil con sus permisos. Verifica la información e inténtalo de nuevo.';
+                }
             }
 
-            $this->perfilModel->createPerfil($data);
-            return $this->redirect()->toRoute('security', ['action' => 'perfil']);
+            $permisosIndexados = $this->normalizePostedPermissions($data['permisos'] ?? []);
         }
 
-        return new ViewModel([
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+        return $this->render('security/perfil-add', [
+            'error' => $error,
+            'matrix' => $matrix,
+            'permisos_indexados' => $permisosIndexados,
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Perfil', 'url' => '/security/perfil'],
                 ['nombre' => 'Crear', 'url' => null],
-            ],
+            ]),
         ]);
     }
 
     public function perfilEditAction()
     {
-        $id = (int)$this->params()->fromRoute('id');
-        $perfil = $this->perfilModel->getPerfil($id);
+        AccessHelper::startSession();
 
+        $id = (int) $this->params()->fromRoute('id');
+        $perfil = $this->perfilModel->getPerfil($id);
         if (!$perfil) {
             return $this->redirect()->toRoute('security', ['action' => 'perfil']);
         }
 
         $request = $this->getRequest();
+        $error = null;
+        $matrix = $this->permisoPerfilModel->getModulosActivosConSubmodulos();
+        $permisosIndexados = $this->permisoPerfilModel->getPermisosIndexadosByPerfil($id);
 
         if ($request->isPost()) {
             $data = $request->getPost()->toArray();
+            $nombre = trim((string) ($data['str_nombre_perfil'] ?? ''));
 
-            if (empty($data['str_nombre_perfil'])) {
-                return new ViewModel([
-                    'perfil' => $perfil,
-                    'error' => 'El nombre del perfil es requerido',
-                    'modulos' => $this->getModulosParaMenu(),
-                    'breadcrumbs' => [
-                        ['nombre' => 'Inicio', 'url' => '/'],
-                        ['nombre' => 'Seguridad', 'url' => null],
-                        ['nombre' => 'Perfil', 'url' => '/security/perfil'],
-                        ['nombre' => 'Editar', 'url' => null],
-                    ],
+            if ($nombre === '') {
+                $error = 'El nombre del perfil es obligatorio.';
+                $permisosIndexados = $this->normalizePostedPermissions($data['permisos'] ?? []);
+            } else {
+                $this->perfilModel->updatePerfil($id, [
+                    'str_nombre_perfil' => $nombre,
+                    'descripcion' => trim((string) ($data['descripcion'] ?? '')),
                 ]);
+                $this->permisoPerfilModel->savePermisosByPerfil($id, $data['permisos'] ?? []);
+
+                if ((int) ($_SESSION['usuario_perfil_id'] ?? 0) === $id) {
+                    $this->refreshCurrentSession();
+                }
+
+                return $this->redirect()->toRoute('security', ['action' => 'perfil']);
             }
 
-            $this->perfilModel->updatePerfil($id, $data);
-            return $this->redirect()->toRoute('security', ['action' => 'perfil']);
+            $perfil['str_nombre_perfil'] = $nombre;
+            $perfil['descripcion'] = trim((string) ($data['descripcion'] ?? $perfil['descripcion'] ?? ''));
         }
 
-        return new ViewModel([
+        return $this->render('security/perfil-edit', [
             'perfil' => $perfil,
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+            'error' => $error,
+            'matrix' => $matrix,
+            'permisos_indexados' => $permisosIndexados,
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Perfil', 'url' => '/security/perfil'],
                 ['nombre' => 'Editar', 'url' => null],
-            ],
+            ]),
         ]);
     }
 
     public function perfilDeleteAction()
     {
-        $id = (int)$this->params()->fromRoute('id');
-
-        if ($this->perfilModel->deletePerfil($id)) {
+        $ok = $this->perfilModel->deletePerfil((int) $this->params()->fromRoute('id'));
+        if ($ok) {
             return $this->redirect()->toRoute('security', ['action' => 'perfil']);
         }
 
-        return new ViewModel([
-            'error' => 'No se puede eliminar este perfil. Verifique que no haya usuarios asignados.',
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+        return $this->render('security/perfil-detalle', [
+            'error' => 'No se puede eliminar este perfil porque tiene usuarios asignados o dependencias activas.',
+            'perfil' => null,
+            'matrix' => [],
+            'permisos_indexados' => ['modulos' => [], 'submodulos' => []],
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Perfil', 'url' => '/security/perfil'],
-                ['nombre' => 'Eliminar', 'url' => null],
-            ],
+                ['nombre' => 'Detalle', 'url' => null],
+            ]),
         ]);
     }
 
     public function perfilDetalleAction()
     {
-        $id = (int)$this->params()->fromRoute('id');
+        $id = (int) $this->params()->fromRoute('id');
         $perfil = $this->perfilModel->getPerfil($id);
-
         if (!$perfil) {
             return $this->redirect()->toRoute('security', ['action' => 'perfil']);
         }
 
-        return new ViewModel([
+        return $this->render('security/perfil-detalle', [
             'perfil' => $perfil,
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+            'matrix' => $this->permisoPerfilModel->getModulosActivosConSubmodulos(),
+            'permisos_indexados' => $this->permisoPerfilModel->getPermisosIndexadosByPerfil($id),
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Perfil', 'url' => '/security/perfil'],
                 ['nombre' => 'Detalle', 'url' => null],
-            ],
+            ]),
         ]);
     }
 
-    // ==================== MÓDULO ====================
-
     public function moduloAction()
     {
-        $page = (int)$this->params()->fromQuery('page', 1);
+        $page = max(1, (int) $this->params()->fromQuery('page', 1));
         $limit = 5;
         $offset = ($page - 1) * $limit;
-
-        $modulos = $this->moduloModel->getModulos($limit, $offset);
         $total = $this->moduloModel->getModulosTotal();
-        $pages = ceil($total / $limit);
 
-        return new ViewModel([
-            'modulos' => $this->getModulosParaMenu(),
-            'modulos' => $modulos,
+        return $this->render('security/modulo', [
+            'modulos' => $this->moduloModel->getModulos($limit, $offset),
             'page' => $page,
-            'pages' => $pages,
-            'total' => $total,
-            'permisos_modulo' => $this->getPermisosModulo('modulo'),
-            'breadcrumbs' => [
+            'pages' => (int) ceil($total / max(1, $limit)),
+            'permisos_modulo' => $this->getPermisosRuta('/security/modulo'),
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Módulo', 'url' => null],
-            ],
+            ]),
         ]);
     }
 
     public function moduloAddAction()
     {
         $request = $this->getRequest();
+        $error = null;
 
         if ($request->isPost()) {
             $data = $request->getPost()->toArray();
-
-            if (empty($data['str_nombre_modulo'])) {
-                return new ViewModel([
-                    'error' => 'El nombre del módulo es requerido',
-                    'modulos' => $this->getModulosParaMenu(),
-                    'breadcrumbs' => [
-                        ['nombre' => 'Inicio', 'url' => '/'],
-                        ['nombre' => 'Seguridad', 'url' => null],
-                        ['nombre' => 'Módulo', 'url' => '/security/modulo'],
-                        ['nombre' => 'Crear', 'url' => null],
-                    ],
-                ]);
+            if (trim((string) ($data['str_nombre_modulo'] ?? '')) === '') {
+                $error = 'El nombre del módulo es obligatorio.';
+            } else {
+                $this->moduloModel->createModulo($data);
+                return $this->redirect()->toRoute('security', ['action' => 'modulo']);
             }
-
-            $this->moduloModel->createModulo($data);
-            return $this->redirect()->toRoute('security', ['action' => 'modulo']);
         }
 
-        return new ViewModel([
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+        return $this->render('security/modulo-add', [
+            'error' => $error,
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Módulo', 'url' => '/security/modulo'],
                 ['nombre' => 'Crear', 'url' => null],
-            ],
+            ]),
         ]);
     }
 
     public function moduloEditAction()
     {
-        $id = (int)$this->params()->fromRoute('id');
+        $id = (int) $this->params()->fromRoute('id');
         $modulo = $this->moduloModel->getModulo($id);
-
         if (!$modulo) {
             return $this->redirect()->toRoute('security', ['action' => 'modulo']);
         }
 
         $request = $this->getRequest();
+        $error = null;
 
         if ($request->isPost()) {
             $data = $request->getPost()->toArray();
-
-            if (empty($data['str_nombre_modulo'])) {
-                return new ViewModel([
-                    'modulo' => $modulo,
-                    'error' => 'El nombre del módulo es requerido',
-                    'modulos' => $this->getModulosParaMenu(),
-                    'breadcrumbs' => [
-                        ['nombre' => 'Inicio', 'url' => '/'],
-                        ['nombre' => 'Seguridad', 'url' => null],
-                        ['nombre' => 'Módulo', 'url' => '/security/modulo'],
-                        ['nombre' => 'Editar', 'url' => null],
-                    ],
-                ]);
+            if (trim((string) ($data['str_nombre_modulo'] ?? '')) === '') {
+                $error = 'El nombre del módulo es obligatorio.';
+                $modulo = array_merge($modulo, $data);
+            } else {
+                $this->moduloModel->updateModulo($id, $data);
+                return $this->redirect()->toRoute('security', ['action' => 'modulo']);
             }
-
-            $this->moduloModel->updateModulo($id, $data);
-            return $this->redirect()->toRoute('security', ['action' => 'modulo']);
         }
 
-        return new ViewModel([
+        return $this->render('security/modulo-edit', [
             'modulo' => $modulo,
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+            'error' => $error,
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Módulo', 'url' => '/security/modulo'],
                 ['nombre' => 'Editar', 'url' => null],
-            ],
+            ]),
         ]);
     }
 
     public function moduloDeleteAction()
     {
-        $id = (int)$this->params()->fromRoute('id');
-
-        if ($this->moduloModel->deleteModulo($id)) {
+        $ok = $this->moduloModel->deleteModulo((int) $this->params()->fromRoute('id'));
+        if ($ok) {
             return $this->redirect()->toRoute('security', ['action' => 'modulo']);
         }
 
-        return new ViewModel([
-            'error' => 'No se puede eliminar este módulo. Verifique que no tenga permisos o submódulos asociados.',
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+        return $this->render('security/modulo-detalle', [
+            'error' => 'No se puede eliminar este módulo porque tiene submódulos o permisos activos.',
+            'modulo' => null,
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Módulo', 'url' => '/security/modulo'],
-                ['nombre' => 'Eliminar', 'url' => null],
-            ],
+                ['nombre' => 'Detalle', 'url' => null],
+            ]),
         ]);
     }
 
     public function moduloDetalleAction()
     {
-        $id = (int)$this->params()->fromRoute('id');
+        $id = (int) $this->params()->fromRoute('id');
         $modulo = $this->moduloModel->getModulo($id);
-
         if (!$modulo) {
             return $this->redirect()->toRoute('security', ['action' => 'modulo']);
         }
 
-        return new ViewModel([
+        return $this->render('security/modulo-detalle', [
             'modulo' => $modulo,
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+            'submodulos' => $this->submoduloModel->getSubmodulosActivosByModulo($id),
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Módulo', 'url' => '/security/modulo'],
                 ['nombre' => 'Detalle', 'url' => null],
-            ],
+            ]),
         ]);
     }
 
-    // ==================== USUARIO ====================
+    public function submoduloAction()
+    {
+        $page = max(1, (int) $this->params()->fromQuery('page', 1));
+        $moduleId = (int) $this->params()->fromQuery('modulo', 0);
+        $limit = 8;
+        $offset = ($page - 1) * $limit;
+        $total = $this->submoduloModel->getSubmodulosTotal($moduleId > 0 ? $moduleId : null);
+
+        return $this->render('security/submodulo', [
+            'submodulos' => $this->submoduloModel->getSubmodulos($limit, $offset, $moduleId > 0 ? $moduleId : null),
+            'modulos_select' => $this->submoduloModel->getModulosForSelect(),
+            'modulo_filtro' => $moduleId,
+            'page' => $page,
+            'pages' => (int) ceil($total / max(1, $limit)),
+            'permisos_modulo' => $this->getPermisosRuta('/security/submodulo'),
+            'breadcrumbs' => $this->breadcrumbs([
+                ['nombre' => 'Inicio', 'url' => '/'],
+                ['nombre' => 'Seguridad', 'url' => null],
+                ['nombre' => 'Submódulo', 'url' => null],
+            ]),
+        ]);
+    }
+
+    public function submoduloAddAction()
+    {
+        $request = $this->getRequest();
+        $error = null;
+
+        if ($request->isPost()) {
+            $data = $request->getPost()->toArray();
+            if (empty($data['id_modulo']) || trim((string) ($data['str_nombre_submodulo'] ?? '')) === '') {
+                $error = 'Debes seleccionar un módulo y escribir el nombre del submódulo.';
+            } else {
+                $this->submoduloModel->createSubmodulo($data);
+                return $this->redirect()->toRoute('security', ['action' => 'submodulo']);
+            }
+        }
+
+        return $this->render('security/submodulo-add', [
+            'error' => $error,
+            'modulos_select' => $this->submoduloModel->getModulosForSelect(),
+            'breadcrumbs' => $this->breadcrumbs([
+                ['nombre' => 'Inicio', 'url' => '/'],
+                ['nombre' => 'Seguridad', 'url' => null],
+                ['nombre' => 'Submódulo', 'url' => '/security/submodulo'],
+                ['nombre' => 'Crear', 'url' => null],
+            ]),
+        ]);
+    }
+
+    public function submoduloEditAction()
+    {
+        $id = (int) $this->params()->fromRoute('id');
+        $submodulo = $this->submoduloModel->getSubmodulo($id);
+        if (!$submodulo) {
+            return $this->redirect()->toRoute('security', ['action' => 'submodulo']);
+        }
+
+        $request = $this->getRequest();
+        $error = null;
+
+        if ($request->isPost()) {
+            $data = $request->getPost()->toArray();
+            if (empty($data['id_modulo']) || trim((string) ($data['str_nombre_submodulo'] ?? '')) === '') {
+                $error = 'Debes seleccionar un módulo y escribir el nombre del submódulo.';
+                $submodulo = array_merge($submodulo, $data);
+            } else {
+                $this->submoduloModel->updateSubmodulo($id, $data);
+                return $this->redirect()->toRoute('security', ['action' => 'submodulo']);
+            }
+        }
+
+        return $this->render('security/submodulo-edit', [
+            'submodulo' => $submodulo,
+            'modulos_select' => $this->submoduloModel->getModulosForSelect(),
+            'error' => $error,
+            'breadcrumbs' => $this->breadcrumbs([
+                ['nombre' => 'Inicio', 'url' => '/'],
+                ['nombre' => 'Seguridad', 'url' => null],
+                ['nombre' => 'Submódulo', 'url' => '/security/submodulo'],
+                ['nombre' => 'Editar', 'url' => null],
+            ]),
+        ]);
+    }
+
+    public function submoduloDeleteAction()
+    {
+        $ok = $this->submoduloModel->deleteSubmodulo((int) $this->params()->fromRoute('id'));
+        if ($ok) {
+            return $this->redirect()->toRoute('security', ['action' => 'submodulo']);
+        }
+
+        return $this->render('security/submodulo-detalle', [
+            'error' => 'No se puede eliminar este submódulo porque tiene permisos activos.',
+            'submodulo' => null,
+            'breadcrumbs' => $this->breadcrumbs([
+                ['nombre' => 'Inicio', 'url' => '/'],
+                ['nombre' => 'Seguridad', 'url' => null],
+                ['nombre' => 'Submódulo', 'url' => '/security/submodulo'],
+                ['nombre' => 'Detalle', 'url' => null],
+            ]),
+        ]);
+    }
+
+    public function submoduloDetalleAction()
+    {
+        $id = (int) $this->params()->fromRoute('id');
+        $submodulo = $this->submoduloModel->getSubmodulo($id);
+        if (!$submodulo) {
+            return $this->redirect()->toRoute('security', ['action' => 'submodulo']);
+        }
+
+        return $this->render('security/submodulo-detalle', [
+            'submodulo' => $submodulo,
+            'breadcrumbs' => $this->breadcrumbs([
+                ['nombre' => 'Inicio', 'url' => '/'],
+                ['nombre' => 'Seguridad', 'url' => null],
+                ['nombre' => 'Submódulo', 'url' => '/security/submodulo'],
+                ['nombre' => 'Detalle', 'url' => null],
+            ]),
+        ]);
+    }
 
     public function usuarioAction()
     {
-        $page = (int)$this->params()->fromQuery('page', 1);
+        $page = max(1, (int) $this->params()->fromQuery('page', 1));
         $limit = 5;
         $offset = ($page - 1) * $limit;
-
-        $usuarios = $this->usuarioModel->getUsuarios($limit, $offset);
         $total = $this->usuarioModel->getUsuariosTotal();
-        $pages = ceil($total / $limit);
 
-        return new ViewModel([
-            'usuarios' => $usuarios,
+        return $this->render('security/usuario', [
+            'usuarios' => $this->usuarioModel->getUsuarios($limit, $offset),
             'page' => $page,
-            'pages' => $pages,
-            'total' => $total,
-            'permisos_modulo' => $this->getPermisosModulo('usuario'),
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+            'pages' => (int) ceil($total / max(1, $limit)),
+            'permisos_modulo' => $this->getPermisosRuta('/security/usuario'),
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Usuario', 'url' => null],
-            ],
+            ]),
         ]);
     }
 
     public function usuarioAddAction()
     {
         $request = $this->getRequest();
-        $perfiles = $this->usuarioModel->getPerfilesForSelect();
-        $estados = $this->usuarioModel->getEstadosForSelect();
+        $error = null;
 
         if ($request->isPost()) {
             $data = $request->getPost()->toArray();
 
-            // Validaciones básicas
-            if (empty($data['str_nombre_usuario']) || empty($data['str_pwd']) || empty($data['str_correo'])) {
-                return new ViewModel([
-                    'error' => 'Los campos requeridos no pueden estar vacíos',
-                    'perfiles' => $perfiles,
-                    'estados' => $estados,
-                    'modulos' => $this->getModulosParaMenu(),
-                    'breadcrumbs' => [
-                        ['nombre' => 'Inicio', 'url' => '/'],
-                        ['nombre' => 'Seguridad', 'url' => null],
-                        ['nombre' => 'Usuario', 'url' => '/security/usuario'],
-                        ['nombre' => 'Crear', 'url' => null],
-                    ],
-                ]);
+            $data['str_numero_celular'] = preg_replace('/\D+/', '', (string) ($data['str_numero_celular'] ?? '')) ?? '';
+            $error = $this->validateUsuarioData($data, true);
+
+            if ($error === null) {
+                $this->usuarioModel->createUsuario($data);
+                return $this->redirect()->toRoute('security', ['action' => 'usuario']);
             }
-
-            // Manejar upload de imagen
-            $files = $request->getFiles();
-            if ($files->get('imagen')) {
-                $file = $files->get('imagen');
-                
-                // Verificar que sea un objeto válido de UploadedFile
-                if (is_object($file) && method_exists($file, 'getClientFilename')) {
-                    $uploadDir = 'public/uploads/usuarios/';
-                    
-                    if (!is_dir($uploadDir)) {
-                        mkdir($uploadDir, 0777, true);
-                    }
-
-                    $filename = $file->getClientFilename();
-                    if (!empty($filename)) {
-                        $ext = pathinfo($filename, PATHINFO_EXTENSION);
-                        $nombre = uniqid('user_') . '.' . $ext;
-                        $file->moveTo($uploadDir . $nombre);
-                        $data['imagen'] = 'uploads/usuarios/' . $nombre;
-                    }
-                }
-            }
-
-            $this->usuarioModel->createUsuario($data);
-            return $this->redirect()->toRoute('security', ['action' => 'usuario']);
         }
 
-        return new ViewModel([
-            'perfiles' => $perfiles,
-            'estados' => $estados,
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+        return $this->render('security/usuario-add', [
+            'error' => $error,
+            'perfiles' => $this->usuarioModel->getPerfilesForSelect(),
+            'estados' => $this->usuarioModel->getEstadosForSelect(),
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Usuario', 'url' => '/security/usuario'],
                 ['nombre' => 'Crear', 'url' => null],
-            ],
+            ]),
         ]);
     }
 
     public function usuarioEditAction()
     {
-        $id = (int)$this->params()->fromRoute('id');
-        $usuario = $this->usuarioModel->getUsuario($id);
+        AccessHelper::startSession();
 
+        $id = (int) $this->params()->fromRoute('id');
+        $usuario = $this->usuarioModel->getUsuario($id);
         if (!$usuario) {
             return $this->redirect()->toRoute('security', ['action' => 'usuario']);
         }
 
         $request = $this->getRequest();
-        $perfiles = $this->usuarioModel->getPerfilesForSelect();
-        $estados = $this->usuarioModel->getEstadosForSelect();
+        $error = null;
 
         if ($request->isPost()) {
             $data = $request->getPost()->toArray();
 
-            if (empty($data['str_nombre_usuario']) || empty($data['str_correo'])) {
-                return new ViewModel([
-                    'usuario' => $usuario,
-                    'error' => 'Los campos requeridos no pueden estar vacíos',
-                    'perfiles' => $perfiles,
-                    'estados' => $estados,
-                    'modulos' => $this->getModulosParaMenu(),
-                    'breadcrumbs' => [
-                        ['nombre' => 'Inicio', 'url' => '/'],
-                        ['nombre' => 'Seguridad', 'url' => null],
-                        ['nombre' => 'Usuario', 'url' => '/security/usuario'],
-                        ['nombre' => 'Editar', 'url' => null],
-                    ],
-                ]);
-            }
+            $data['str_numero_celular'] = preg_replace('/\D+/', '', (string) ($data['str_numero_celular'] ?? '')) ?? '';
+            $error = $this->validateUsuarioData($data, false);
 
-            // Manejar upload de imagen
-            $files = $request->getFiles();
-            if ($files->get('imagen')) {
-                $file = $files->get('imagen');
-                
-                // Verificar que sea un objeto válido de UploadedFile
-                if (is_object($file) && method_exists($file, 'getClientFilename')) {
-                    $uploadDir = 'public/uploads/usuarios/';
-                    
-                    if (!is_dir($uploadDir)) {
-                        mkdir($uploadDir, 0777, true);
-                    }
-
-                    $filename = $file->getClientFilename();
-                    if (!empty($filename)) {
-                        $ext = pathinfo($filename, PATHINFO_EXTENSION);
-                        $nombre = uniqid('user_') . '.' . $ext;
-                        $file->moveTo($uploadDir . $nombre);
-                        $data['imagen'] = 'uploads/usuarios/' . $nombre;
-                    }
+            if ($error !== null) {
+                $usuario = array_merge($usuario, $data);
+            } else {
+                $this->usuarioModel->updateUsuario($id, $data);
+                if ((int) ($_SESSION['usuario_id'] ?? 0) === $id) {
+                    $this->refreshCurrentSession();
                 }
+                return $this->redirect()->toRoute('security', ['action' => 'usuario']);
             }
-
-            $this->usuarioModel->updateUsuario($id, $data);
-            return $this->redirect()->toRoute('security', ['action' => 'usuario']);
         }
 
-        return new ViewModel([
+        return $this->render('security/usuario-edit', [
             'usuario' => $usuario,
-            'perfiles' => $perfiles,
-            'estados' => $estados,
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+            'error' => $error,
+            'perfiles' => $this->usuarioModel->getPerfilesForSelect(),
+            'estados' => $this->usuarioModel->getEstadosForSelect(),
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Usuario', 'url' => '/security/usuario'],
                 ['nombre' => 'Editar', 'url' => null],
-            ],
+            ]),
         ]);
     }
 
     public function usuarioDeleteAction()
     {
-        $id = (int)$this->params()->fromRoute('id');
-
-        if ($this->usuarioModel->deleteUsuario($id)) {
+        $ok = $this->usuarioModel->deleteUsuario((int) $this->params()->fromRoute('id'));
+        if ($ok) {
             return $this->redirect()->toRoute('security', ['action' => 'usuario']);
         }
 
-        return new ViewModel([
+        return $this->render('security/usuario-detalle', [
             'error' => 'No se puede eliminar este usuario.',
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+            'usuario' => null,
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Usuario', 'url' => '/security/usuario'],
-                ['nombre' => 'Eliminar', 'url' => null],
-            ],
+                ['nombre' => 'Detalle', 'url' => null],
+            ]),
         ]);
     }
 
     public function usuarioDetalleAction()
     {
-        $id = (int)$this->params()->fromRoute('id');
+        $id = (int) $this->params()->fromRoute('id');
         $usuario = $this->usuarioModel->getUsuario($id);
-
         if (!$usuario) {
             return $this->redirect()->toRoute('security', ['action' => 'usuario']);
         }
 
-        return new ViewModel([
+        return $this->render('security/usuario-detalle', [
             'usuario' => $usuario,
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Usuario', 'url' => '/security/usuario'],
                 ['nombre' => 'Detalle', 'url' => null],
-            ],
+            ]),
         ]);
     }
 
-    // ==================== PERMISOS-PERFIL ====================
-
     public function permisoPerfilAction()
     {
-        $page = (int)$this->params()->fromQuery('page', 1);
-        $limit = 5;
+        $page = max(1, (int) $this->params()->fromQuery('page', 1));
+        $limit = 10;
         $offset = ($page - 1) * $limit;
-
-        $permisos = $this->permisoPerfilModel->getPermisos($limit, $offset);
         $total = $this->permisoPerfilModel->getPermisosTotal();
-        $pages = ceil($total / $limit);
 
-        return new ViewModel([
-            'permisos' => $permisos,
+        return $this->render('security/permiso-perfil', [
+            'permisos' => $this->permisoPerfilModel->getPermisos($limit, $offset),
             'page' => $page,
-            'pages' => $pages,
-            'total' => $total,
-            'permisos_modulo' => $this->getPermisosModulo('permiso'),
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+            'pages' => (int) ceil($total / max(1, $limit)),
+            'permisos_modulo' => $this->getPermisosRuta('/security/permiso-perfil'),
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Permisos-Perfil', 'url' => null],
-            ],
+            ]),
         ]);
     }
 
     public function permisoPerfilAddAction()
     {
         $request = $this->getRequest();
-        $modulos = $this->permisoPerfilModel->getModulosForSelect();
-        $perfiles = $this->permisoPerfilModel->getPerfilesForSelect();
+        $error = null;
+        $modulos = $this->permisoPerfilModel->getModulosActivosConSubmodulos();
 
         if ($request->isPost()) {
             $data = $request->getPost()->toArray();
-
-            if (empty($data['id_modulo']) || empty($data['id_perfil'])) {
-                return new ViewModel([
-                    'error' => 'El módulo y perfil son requeridos',
-                    'modulos_list' => $modulos,
-                    'perfiles' => $perfiles,
-                    'modulos' => $this->getModulosParaMenu(),
-                    'breadcrumbs' => [
-                        ['nombre' => 'Inicio', 'url' => '/'],
-                        ['nombre' => 'Seguridad', 'url' => null],
-                        ['nombre' => 'Permisos-Perfil', 'url' => '/security/permiso-perfil'],
-                        ['nombre' => 'Crear', 'url' => null],
-                    ],
-                ]);
+            if (empty($data['id_perfil']) || (empty($data['id_modulo']) && empty($data['id_submodulo']))) {
+                $error = 'Debes seleccionar un perfil y un recurso.';
+            } else {
+                $this->permisoPerfilModel->createPermiso($data);
+                if ((int) ($_SESSION['usuario_perfil_id'] ?? 0) === (int) $data['id_perfil']) {
+                    $this->refreshCurrentSession();
+                }
+                return $this->redirect()->toRoute('security', ['action' => 'permiso-perfil']);
             }
-
-            $this->permisoPerfilModel->createPermiso($data);
-            return $this->redirect()->toRoute('security', ['action' => 'permiso-perfil']);
         }
 
-        return new ViewModel([
-            'modulos_list' => $modulos,
-            'perfiles' => $perfiles,
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+        return $this->render('security/permiso-perfil-add', [
+            'error' => $error,
+            'perfiles' => $this->permisoPerfilModel->getPerfilesForSelect(),
+            'modulos_tree' => $modulos,
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Permisos-Perfil', 'url' => '/security/permiso-perfil'],
                 ['nombre' => 'Crear', 'url' => null],
-            ],
+            ]),
         ]);
     }
 
     public function permisoPerfilEditAction()
     {
-        $id = (int)$this->params()->fromRoute('id');
-        $permiso = $this->permisoPerfilModel->getPermiso($id);
+        AccessHelper::startSession();
 
+        $id = (int) $this->params()->fromRoute('id');
+        $permiso = $this->permisoPerfilModel->getPermiso($id);
         if (!$permiso) {
             return $this->redirect()->toRoute('security', ['action' => 'permiso-perfil']);
         }
 
         $request = $this->getRequest();
-        $modulos = $this->permisoPerfilModel->getModulosForSelect();
-        $perfiles = $this->permisoPerfilModel->getPerfilesForSelect();
-
         if ($request->isPost()) {
-            $data = $request->getPost()->toArray();
-
-            $this->permisoPerfilModel->updatePermiso($id, $data);
+            $this->permisoPerfilModel->updatePermiso($id, $request->getPost()->toArray());
+            if ((int) ($_SESSION['usuario_perfil_id'] ?? 0) === (int) ($permiso['id_perfil'] ?? 0)) {
+                $this->refreshCurrentSession();
+            }
             return $this->redirect()->toRoute('security', ['action' => 'permiso-perfil']);
         }
 
-        return new ViewModel([
+        return $this->render('security/permiso-perfil-edit', [
             'permiso' => $permiso,
-            'modulos_list' => $modulos,
-            'perfiles' => $perfiles,
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Permisos-Perfil', 'url' => '/security/permiso-perfil'],
                 ['nombre' => 'Editar', 'url' => null],
-            ],
+            ]),
         ]);
     }
 
     public function permisoPerfilDeleteAction()
     {
-        $id = (int)$this->params()->fromRoute('id');
+        AccessHelper::startSession();
+        $id = (int) $this->params()->fromRoute('id');
+        $permiso = $this->permisoPerfilModel->getPermiso($id);
+        $ok = $this->permisoPerfilModel->deletePermiso($id);
 
-        if ($this->permisoPerfilModel->deletePermiso($id)) {
+        if ($ok) {
+            if ($permiso && (int) ($_SESSION['usuario_perfil_id'] ?? 0) === (int) ($permiso['id_perfil'] ?? 0)) {
+                $this->refreshCurrentSession();
+            }
             return $this->redirect()->toRoute('security', ['action' => 'permiso-perfil']);
         }
 
-        return new ViewModel([
-            'error' => 'No se puede eliminar este permiso.',
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+        return $this->render('security/permiso-perfil-detalle', [
+            'error' => 'No se pudo eliminar el permiso.',
+            'permiso' => $permiso,
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Permisos-Perfil', 'url' => '/security/permiso-perfil'],
-                ['nombre' => 'Eliminar', 'url' => null],
-            ],
+                ['nombre' => 'Detalle', 'url' => null],
+            ]),
         ]);
     }
 
     public function permisoPerfilDetalleAction()
     {
-        $id = (int)$this->params()->fromRoute('id');
-        $permiso = $this->permisoPerfilModel->getPermiso($id);
-
+        $permiso = $this->permisoPerfilModel->getPermiso((int) $this->params()->fromRoute('id'));
         if (!$permiso) {
             return $this->redirect()->toRoute('security', ['action' => 'permiso-perfil']);
         }
 
-        return new ViewModel([
+        return $this->render('security/permiso-perfil-detalle', [
             'permiso' => $permiso,
-            'modulos' => $this->getModulosParaMenu(),
-            'breadcrumbs' => [
+            'breadcrumbs' => $this->breadcrumbs([
                 ['nombre' => 'Inicio', 'url' => '/'],
                 ['nombre' => 'Seguridad', 'url' => null],
                 ['nombre' => 'Permisos-Perfil', 'url' => '/security/permiso-perfil'],
                 ['nombre' => 'Detalle', 'url' => null],
-            ],
+            ]),
         ]);
-    }}
+    }
+
+    private function render(string $template, array $data = []): ViewModel
+    {
+        $view = new ViewModel(array_merge($data, [
+            'menu_modulos' => AccessHelper::buildMenu($this->db),
+        ]));
+        $view->setTemplate($template);
+        return $view;
+    }
+
+    private function breadcrumbs(array $breadcrumbs): array
+    {
+        return $breadcrumbs;
+    }
+
+    private function getPermisosRuta(string $path): array
+    {
+        return AccessHelper::getPathPermissions($this->db, $path);
+    }
+
+    private function normalizePostedPermissions(array $permisos): array
+    {
+        return [
+            'modulos' => is_array($permisos['modulos'] ?? null) ? $permisos['modulos'] : [],
+            'submodulos' => is_array($permisos['submodulos'] ?? null) ? $permisos['submodulos'] : [],
+        ];
+    }
+    private function validateUsuarioData(array $data, bool $requirePassword = true): ?string
+    {
+        $nombre = trim((string) ($data['str_nombre_usuario'] ?? ''));
+        $correo = strtolower(trim((string) ($data['str_correo'] ?? '')));
+        $telefono = preg_replace('/\D+/', '', (string) ($data['str_numero_celular'] ?? '')) ?? '';
+        $perfil = (int) ($data['id_perfil'] ?? 0);
+        $password = (string) ($data['str_pwd'] ?? '');
+
+        if ($nombre === '' || $correo === '' || $perfil <= 0) {
+            return 'Nombre de empleado, correo y perfil son obligatorios.';
+        }
+
+        if (mb_strlen($nombre) < 3 || mb_strlen($nombre) > 120) {
+            return 'El nombre de empleado debe tener entre 3 y 120 caracteres.';
+        }
+
+        if (!preg_match('/^[\p{L}\s\.\-]+$/u', $nombre)) {
+            return 'El nombre de empleado solo puede contener letras, espacios, puntos y guiones.';
+        }
+
+        if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+            return 'El correo electrónico no tiene un formato válido.';
+        }
+
+        if ($telefono !== '' && !preg_match('/^\d{10}$/', $telefono)) {
+            return 'El teléfono debe contener exactamente 10 dígitos numéricos.';
+        }
+
+        if ($requirePassword && $password === '') {
+            return 'La contraseña es obligatoria.';
+        }
+
+        if ($password !== '' && mb_strlen($password) < 8) {
+            return 'La contraseña debe tener al menos 8 caracteres.';
+        }
+
+        return null;
+    }
+
+    private function refreshCurrentSession(): void
+    {
+        AccessHelper::startSession();
+        $userId = (int) ($_SESSION['usuario_id'] ?? 0);
+        if ($userId <= 0) {
+            return;
+        }
+
+        $row = $this->db->query(
+            'SELECT 
+                u.id,
+                u.str_nombre_usuario,
+                u.str_correo,
+                u.id_perfil,
+                p.str_nombre_perfil,
+                p.bit_administrador
+             FROM usuario u
+             INNER JOIN perfil p ON p.id = u.id_perfil
+             WHERE u.id = ?',
+            [$userId]
+        )->current();
+
+        if (!$row) {
+            return;
+        }
+
+        $sessionPermissions = $this->permisoPerfilModel->getSessionPermissionsForPerfil((int) $row['id_perfil']);
+        $esAdmin = $this->permisoPerfilModel->profileIsAdmin((int) $row['id_perfil']);
+
+        $_SESSION['usuario_nombre'] = $row['str_nombre_usuario'];
+        $_SESSION['usuario_correo'] = $row['str_correo'];
+        $_SESSION['usuario_perfil_id'] = (int) $row['id_perfil'];
+        $_SESSION['perfil_nombre'] = $row['str_nombre_perfil'];
+        $_SESSION['usuario_rol'] = $row['str_nombre_perfil'];
+        $_SESSION['permisos_modulos'] = $sessionPermissions['modulos'];
+        $_SESSION['permisos_submodulos'] = $sessionPermissions['submodulos'];
+        $_SESSION['permisos'] = $sessionPermissions['modulos'];
+        $_SESSION['es_admin'] = $esAdmin;
+        $_SESSION['bit_administrador'] = $esAdmin;
+    }
+}

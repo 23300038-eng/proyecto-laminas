@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Security\Model;
 
 use Laminas\Db\Adapter\AdapterInterface;
-use Laminas\Db\Sql\Sql;
 use Laminas\Db\Sql\Expression;
+use Laminas\Db\Sql\Sql;
 
 class ModuloModel
 {
@@ -17,156 +17,142 @@ class ModuloModel
         $this->db = $db;
     }
 
-    /**
-     * Obtener todos los módulos con paginación
-     */
     public function getModulos(int $limit = 5, int $offset = 0): array
     {
-        $sql = new Sql($this->db);
-        
-        $select = $sql->select('modulo')
-            ->order('int_orden ASC')
-            ->limit($limit)
-            ->offset($offset);
+        try {
+            $result = $this->db->query(
+                'SELECT 
+                    m.id,
+                    m.str_nombre_modulo,
+                    m.str_icono,
+                    m.int_orden,
+                    m.bit_activo,
+                    COUNT(s.id) AS total_submodulos
+                 FROM modulo m
+                 LEFT JOIN submodulo s ON s.id_modulo = m.id
+                 GROUP BY m.id, m.str_nombre_modulo, m.str_icono, m.int_orden, m.bit_activo
+                 ORDER BY m.int_orden ASC, m.str_nombre_modulo ASC
+                 LIMIT ? OFFSET ?',
+                [$limit, $offset]
+            );
 
-        $stmt = $sql->prepareStatementForSqlObject($select);
-        $result = $stmt->execute();
-
-        return array_values(iterator_to_array($result));
+            return array_values(iterator_to_array($result));
+        } catch (\Throwable $exception) {
+            return [];
+        }
     }
 
-    /**
-     * Obtener total de módulos
-     */
     public function getModulosTotal(): int
     {
         $sql = new Sql($this->db);
-        
         $select = $sql->select('modulo');
         $select->columns([new Expression('COUNT(*) as total')]);
+        $row = $sql->prepareStatementForSqlObject($select)->execute()->current();
 
-        $stmt = $sql->prepareStatementForSqlObject($select);
-        $result = $stmt->execute();
-        $row = $result->current();
-
-        return (int)$row['total'];
+        return (int) ($row['total'] ?? 0);
     }
 
-    /**
-     * Obtener módulo por ID
-     */
     public function getModulo(int $id): ?array
     {
-        $sql = new Sql($this->db);
-        
-        $select = $sql->select('modulo')
-            ->where(['id' => $id]);
+        try {
+            $row = $this->db->query(
+                'SELECT 
+                    m.*, 
+                    COUNT(s.id) AS total_submodulos
+                 FROM modulo m
+                 LEFT JOIN submodulo s ON s.id_modulo = m.id
+                 WHERE m.id = ?
+                 GROUP BY m.id',
+                [$id]
+            )->current();
 
-        $stmt = $sql->prepareStatementForSqlObject($select);
-        $result = $stmt->execute();
-        $row = $result->current();
-
-        return $row ? (array)$row : null;
+            return $row ? (array) $row : null;
+        } catch (\Throwable $exception) {
+            return null;
+        }
     }
 
-    /**
-     * Crear nuevo módulo
-     */
+    public function getModuloBySlug(string $slug): ?array
+    {
+        try {
+            $rows = $this->db->query(
+                'SELECT * FROM modulo WHERE COALESCE(bit_activo, true) = true ORDER BY int_orden ASC',
+                []
+            );
+
+            foreach ($rows as $row) {
+                if (\Security\Support\AccessHelper::slugify((string) $row['str_nombre_modulo']) === $slug) {
+                    return (array) $row;
+                }
+            }
+
+            return null;
+        } catch (\Throwable $exception) {
+            return null;
+        }
+    }
+
     public function createModulo(array $data): int
     {
         $sql = new Sql($this->db);
-        
         $insert = $sql->insert('modulo')
             ->values([
-                'str_nombre_modulo' => $data['str_nombre_modulo'] ?? null,
-                'str_icono' => $data['str_icono'] ?? null,
-                'int_orden' => $data['int_orden'] ?? 0,
-                'bit_activo' => $data['bit_activo'] ?? true,
+                'str_nombre_modulo' => trim((string) ($data['str_nombre_modulo'] ?? '')),
+                'str_icono' => trim((string) ($data['str_icono'] ?? '')) ?: null,
+                'int_orden' => (int) ($data['int_orden'] ?? 0),
+                'bit_activo' => !empty($data['bit_activo']),
             ]);
 
-        $stmt = $sql->prepareStatementForSqlObject($insert);
-        $result = $stmt->execute();
-
-        return $this->db->getDriver()->getLastGeneratedValue();
+        $sql->prepareStatementForSqlObject($insert)->execute();
+        return (int) $this->db->getDriver()->getLastGeneratedValue();
     }
 
-    /**
-     * Actualizar módulo
-     */
     public function updateModulo(int $id, array $data): bool
     {
         $sql = new Sql($this->db);
-        
         $update = $sql->update('modulo')
             ->set([
-                'str_nombre_modulo' => $data['str_nombre_modulo'] ?? null,
-                'str_icono' => $data['str_icono'] ?? null,
-                'int_orden' => $data['int_orden'] ?? 0,
-                'bit_activo' => $data['bit_activo'] ?? true,
+                'str_nombre_modulo' => trim((string) ($data['str_nombre_modulo'] ?? '')),
+                'str_icono' => trim((string) ($data['str_icono'] ?? '')) ?: null,
+                'int_orden' => (int) ($data['int_orden'] ?? 0),
+                'bit_activo' => !empty($data['bit_activo']),
                 'actualizado_en' => new Expression('CURRENT_TIMESTAMP'),
             ])
             ->where(['id' => $id]);
 
-        $stmt = $sql->prepareStatementForSqlObject($update);
-        $result = $stmt->execute();
-
+        $result = $sql->prepareStatementForSqlObject($update)->execute();
         return $result->getAffectedRows() > 0;
     }
 
-    /**
-     * Eliminar módulo
-     */
     public function deleteModulo(int $id): bool
     {
+        try {
+            $row = $this->db->query('SELECT COUNT(*) AS total FROM permisos_perfil WHERE id_modulo = ?', [$id])->current();
+            if ((int) ($row['total'] ?? 0) > 0) {
+                return false;
+            }
+
+            $row = $this->db->query('SELECT COUNT(*) AS total FROM submodulo WHERE id_modulo = ?', [$id])->current();
+            if ((int) ($row['total'] ?? 0) > 0) {
+                return false;
+            }
+        } catch (\Throwable $exception) {
+            return false;
+        }
+
         $sql = new Sql($this->db);
-        
-        // No permitir eliminar si hay permisos o submódulos asociados
-        $selectCount = $sql->select('permisos_perfil')
-            ->columns([new Expression('COUNT(*) as total')])
-            ->where(['id_modulo' => $id]);
-
-        $stmt = $sql->prepareStatementForSqlObject($selectCount);
-        $result = $stmt->execute();
-        $row = $result->current();
-
-        if ((int)$row['total'] > 0) {
-            return false;
-        }
-
-        $selectCount = $sql->select('submodulo')
-            ->columns([new Expression('COUNT(*) as total')])
-            ->where(['id_modulo' => $id]);
-
-        $stmt = $sql->prepareStatementForSqlObject($selectCount);
-        $result = $stmt->execute();
-        $row = $result->current();
-
-        if ((int)$row['total'] > 0) {
-            return false;
-        }
-
-        $delete = $sql->delete('modulo')
-            ->where(['id' => $id]);
-
-        $stmt = $sql->prepareStatementForSqlObject($delete);
-        $result = $stmt->execute();
-
+        $delete = $sql->delete('modulo')->where(['id' => $id]);
+        $result = $sql->prepareStatementForSqlObject($delete)->execute();
         return $result->getAffectedRows() > 0;
     }
 
-    /**
-     * Obtener todos los módulos activos (sin paginación)
-     */
     public function getModulosActivos(): array
     {
         $sql = new Sql($this->db);
-        
         $select = $sql->select('modulo')
             ->where(['bit_activo' => true])
             ->order('int_orden ASC');
-
-        $stmt = $sql->prepareStatementForSqlObject($select);
-        $result = $stmt->execute();
+        $result = $sql->prepareStatementForSqlObject($select)->execute();
 
         return array_values(iterator_to_array($result));
     }

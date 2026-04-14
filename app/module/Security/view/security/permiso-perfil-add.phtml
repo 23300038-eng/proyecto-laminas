@@ -1,61 +1,10 @@
-<div class="page-header">
-    <h2>Crear Nuevo Permiso</h2>
-</div>
-
-<form method="POST" style="max-width: 600px;">
-    <div class="form-row">
-        <div class="form-group">
-            <label for="id_modulo">Módulo *</label>
-            <select id="id_modulo" name="id_modulo" required>
-                <option value="">-- Seleccionar --</option>
-                <?php foreach ($modulos as $id => $nombre): ?>
-                    <option value="<?php echo $id; ?>"><?php echo htmlspecialchars($nombre); ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="id_perfil">Perfil *</label>
-            <select id="id_perfil" name="id_perfil" required>
-                <option value="">-- Seleccionar --</option>
-                <?php foreach ($perfiles as $id => $nombre): ?>
-                    <option value="<?php echo $id; ?>"><?php echo htmlspecialchars($nombre); ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-    </div>
-
-    <fieldset style="border: 1px solid #ddd; padding: 1rem; border-radius: 4px; margin: 1.5rem 0;">
-        <legend style="padding: 0 0.5rem;">Permisos</legend>
-
-        <div class="form-check">
-            <input type="checkbox" id="bit_agregar" name="bit_agregar" value="1">
-            <label for="bit_agregar">Agregar / Crear</label>
-        </div>
-
-        <div class="form-check">
-            <input type="checkbox" id="bit_editar" name="bit_editar" value="1">
-            <label for="bit_editar">Editar / Modificar</label>
-        </div>
-
-        <div class="form-check">
-            <input type="checkbox" id="bit_consulta" name="bit_consulta" value="1">
-            <label for="bit_consulta">Consultar / Ver</label>
-        </div>
-
-        <div class="form-check">
-            <input type="checkbox" id="bit_eliminar" name="bit_eliminar" value="1">
-            <label for="bit_eliminar">Eliminar</label>
-        </div>
-
-        <div class="form-check">
-            <input type="checkbox" id="bit_detalle" name="bit_detalle" value="1">
-            <label for="bit_detalle">Ver Detalle</label>
-        </div>
-    </fieldset>
-
-    <div class="btn-group" style="margin-top: 2rem;">
-        <button type="submit" class="btn btn-primary">Guardar</button>
-        <a href="/security/permiso-perfil" class="btn btn-secondary">Cancelar</a>
-    </div>
-</form>
+<?php if (!empty($breadcrumbs)): ?><ul class="breadcrumbs"><?php foreach ($breadcrumbs as $breadcrumb): ?><li><?php if (!empty($breadcrumb['url'])): ?><a href="<?= htmlspecialchars($breadcrumb['url']) ?>"><?= htmlspecialchars($breadcrumb['nombre']) ?></a><?php else: ?><?= htmlspecialchars($breadcrumb['nombre']) ?><?php endif; ?></li><?php endforeach; ?></ul><?php endif; ?>
+<div class="page-header"><div><h1 class="page-title">Asignar Permiso Puntual</h1><p class="page-subtitle">Esta vista es opcional. Normalmente los permisos se administran desde Crear o Editar perfil.</p></div></div>
+<?php if (!empty($error)): ?><div style="margin-bottom:1rem;padding:0.95rem 1rem;border:1px solid #fecaca;background:#fef2f2;color:#b91c1c;border-radius:12px;"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+<form method="POST" class="card"><div class="card-body" style="max-width:760px;display:grid;gap:1rem;">
+<div class="form-group" style="margin:0;"><label class="form-label" for="id_perfil">Perfil *</label><select class="form-control" id="id_perfil" name="id_perfil" required><option value="">Selecciona...</option><?php foreach (($perfiles ?? []) as $id => $nombre): ?><option value="<?= (int) $id ?>"><?= htmlspecialchars($nombre) ?></option><?php endforeach; ?></select></div>
+<div class="form-group" style="margin:0;"><label class="form-label" for="id_recurso">Recurso</label><select class="form-control" id="id_recurso" name="id_submodulo"><option value="">Selecciona un submódulo...</option><?php foreach (($modulos_tree ?? []) as $modulo): ?><optgroup label="<?= htmlspecialchars($modulo['str_nombre_modulo']) ?>"><?php foreach (($modulo['submodulos'] ?? []) as $submodulo): ?><option value="<?= (int) $submodulo['id'] ?>"><?= htmlspecialchars($submodulo['str_nombre_submodulo']) ?></option><?php endforeach; ?></optgroup><?php endforeach; ?></select></div>
+<div class="form-group" style="margin:0;"><label class="form-label" for="id_modulo">Módulo asociado *</label><select class="form-control" id="id_modulo" name="id_modulo" required><option value="">Selecciona...</option><?php foreach (($modulos_tree ?? []) as $modulo): ?><option value="<?= (int) $modulo['id'] ?>"><?= htmlspecialchars($modulo['str_nombre_modulo']) ?></option><?php endforeach; ?></select></div>
+<div style="display:flex;gap:1rem;flex-wrap:wrap;"><label><input type="checkbox" name="bit_consulta" value="1"> Ver</label><label><input type="checkbox" name="bit_agregar" value="1"> Crear</label><label><input type="checkbox" name="bit_editar" value="1"> Editar</label><label><input type="checkbox" name="bit_eliminar" value="1"> Eliminar</label><label><input type="checkbox" name="bit_detalle" value="1"> Detalle</label></div>
+<div class="btn-group"><button type="submit" class="btn btn-primary">Guardar permiso</button><a href="/security/permiso-perfil" class="btn btn-secondary">Cancelar</a></div>
+</div></form>

@@ -4,95 +4,96 @@ declare(strict_types=1);
 
 namespace Auth\Controller;
 
+use Laminas\Db\Adapter\AdapterInterface;
+use Laminas\Db\Sql\Expression;
+use Laminas\Db\Sql\Sql;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\ViewModel;
-use Laminas\Db\Adapter\AdapterInterface;
-use Laminas\Db\Sql\Sql;
+use Security\Model\PermisoPerfilModel;
+use Security\Support\AccessHelper;
 
 class AuthController extends AbstractActionController
 {
     private AdapterInterface $db;
 
-    public function __construct(AdapterInterface $db)
+    /** @var array<string, string> */
+    private array $hcaptchaConfig;
+
+    public function __construct(AdapterInterface $db, array $hcaptchaConfig = [])
     {
         $this->db = $db;
+        $this->hcaptchaConfig = $hcaptchaConfig;
     }
 
     public function loginAction()
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        AccessHelper::startSession();
 
-        // Si ya está logueado, redirigir al dashboard
         if (!empty($_SESSION['usuario_id'])) {
-            return $this->redirect()->toRoute('dashboard', ['action' => 'index']);
+            return $this->redirect()->toRoute('home');
         }
 
         $request = $this->getRequest();
-        $error   = null;
-
-        // Generar CAPTCHA si no existe
-        if (empty($_SESSION['captcha_num1']) || empty($_SESSION['captcha_num2'])) {
-            $_SESSION['captcha_num1'] = rand(1, 9);
-            $_SESSION['captcha_num2'] = rand(1, 9);
-        }
+        $error = null;
 
         if ($request->isPost()) {
-            $data         = $request->getPost()->toArray();
-            $username     = trim($data['username'] ?? '');
-            $password     = $data['password'] ?? '';
-            $captchaInput = (int)($data['captcha'] ?? -1);
-            $captchaAnswer = (int)$_SESSION['captcha_num1'] + (int)$_SESSION['captcha_num2'];
+            $data = $request->getPost()->toArray();
+            $email = strtolower(trim((string) ($data['email'] ?? '')));
+            $password = (string) ($data['password'] ?? '');
+            $captchaToken = trim((string) ($data['h-captcha-response'] ?? ''));
 
-            if (empty($username) || empty($password)) {
-                $error = 'Usuario y contraseña son requeridos.';
-            } elseif ($captchaInput !== $captchaAnswer) {
-                $error = 'La respuesta del CAPTCHA es incorrecta.';
-                $_SESSION['captcha_num1'] = rand(1, 9);
-                $_SESSION['captcha_num2'] = rand(1, 9);
+            if ($email === '' || $password === '') {
+                $error = 'Correo y contraseña son requeridos.';
+            } elseif (!$this->verifyHCaptcha($captchaToken, (string) $request->getServer('REMOTE_ADDR'))) {
+                $error = 'No se pudo validar el hCaptcha. Intenta nuevamente.';
             } else {
-                $usuario = $this->getUsuarioByUsername($username);
+                $usuario = $this->getUsuarioByEmail($email);
 
                 if (!$usuario) {
                     $error = 'El usuario no existe o la contraseña es incorrecta.';
-                } elseif ((int)$usuario['id_estado_usuario'] !== 1) {
+                } elseif ((int) ($usuario['id_estado_usuario'] ?? 0) !== 1) {
                     $error = 'El usuario está inactivo. Contacte al administrador.';
-                } elseif (!password_verify($password, $usuario['str_pwd'])) {
+                } elseif (!password_verify($password, (string) ($usuario['str_pwd'] ?? ''))) {
                     $error = 'El usuario no existe o la contraseña es incorrecta.';
                 } else {
-                    // Login exitoso
-                    $perfil          = $this->getPerfilById((int)$usuario['id_perfil']);
-                    $bitAdministrador = (bool)($perfil['bit_administrador'] ?? false);
-                    $permisos        = $this->getPermisosByPerfil((int)$usuario['id_perfil']);
+                    $perfil = $this->getPerfilById((int) $usuario['id_perfil']);
+                    $sessionPermissions = $this->buildSessionPermissions((int) $usuario['id_perfil']);
+                    $esAdmin = $this->isAdminProfile((int) $usuario['id_perfil']);
 
-                    $_SESSION['usuario_id']        = $usuario['id'];
-                    $_SESSION['usuario_nombre']    = $usuario['str_nombre_usuario'];
-                    $_SESSION['usuario_perfil_id'] = $usuario['id_perfil'];
-                    $_SESSION['usuario_imagen']    = $usuario['imagen'] ?? null;
-                    $_SESSION['bit_administrador'] = $bitAdministrador;
-                    $_SESSION['permisos']          = $permisos;
-                    $_SESSION['perfil_nombre']     = $perfil['str_nombre_perfil'] ?? 'Usuario';
+                    $_SESSION['usuario_id'] = (int) $usuario['id'];
+                    $_SESSION['usuario_nombre'] = $usuario['str_nombre_usuario'];
+                    $_SESSION['usuario_perfil_id'] = (int) $usuario['id_perfil'];
+                                        $_SESSION['usuario_correo'] = $usuario['str_correo'] ?? null;
+                    $_SESSION['perfil_nombre'] = $perfil['str_nombre_perfil'] ?? 'Usuario';
+                    $_SESSION['usuario_rol'] = $perfil['str_nombre_perfil'] ?? 'Usuario';
+                    $_SESSION['permisos_modulos'] = $sessionPermissions['modulos'];
+                    $_SESSION['permisos_submodulos'] = $sessionPermissions['submodulos'];
+                    $_SESSION['permisos'] = $sessionPermissions['modulos'];
+                    $_SESSION['es_admin'] = $esAdmin;
+                    $_SESSION['bit_administrador'] = $esAdmin;
+                    $_SESSION['menu_modulos_cache'] = AccessHelper::buildMenu($this->db);
 
-                    unset($_SESSION['captcha_num1'], $_SESSION['captcha_num2']);
-                    $this->updateLastLogin((int)$usuario['id']);
+                    $this->updateLastLogin((int) $usuario['id']);
 
-                    return $this->redirect()->toRoute('dashboard', ['action' => 'index']);
+                    return $this->redirect()->toRoute('home');
                 }
             }
         }
 
-        return new ViewModel([
-            'error'      => $error,
-            'captcha_n1' => $_SESSION['captcha_num1'] ?? 1,
-            'captcha_n2' => $_SESSION['captcha_num2'] ?? 1,
+        $viewModel = new ViewModel([
+            'error' => $error,
+            'siteKey' => $this->hcaptchaConfig['site_key'] ?? '',
         ]);
+        $viewModel->setTerminal(true);
+
+        return $viewModel;
     }
 
     public function logoutAction()
     {
-        if (session_status() === PHP_SESSION_NONE) session_start();
+        AccessHelper::startSession();
         session_destroy();
+
         return $this->redirect()->toRoute('auth', ['action' => 'login']);
     }
 
@@ -101,47 +102,84 @@ class AuthController extends AbstractActionController
         return $this->redirect()->toRoute('auth', ['action' => 'login']);
     }
 
-    private function getUsuarioByUsername(string $username): ?array
+    private function verifyHCaptcha(string $token, string $remoteIp = ''): bool
     {
-        $sql    = new Sql($this->db);
-        $select = $sql->select('usuario')->where(['str_nombre_usuario' => $username]);
-        $row    = $sql->prepareStatementForSqlObject($select)->execute()->current();
-        return $row ? (array)$row : null;
+        $secret = trim((string) ($this->hcaptchaConfig['secret'] ?? ''));
+        $siteKey = trim((string) ($this->hcaptchaConfig['site_key'] ?? ''));
+
+        if ($token === '' || $secret === '') {
+            return false;
+        }
+
+        $payload = [
+            'secret' => $secret,
+            'response' => $token,
+        ];
+
+        if ($siteKey !== '') {
+            $payload['sitekey'] = $siteKey;
+        }
+
+        if ($remoteIp !== '') {
+            $payload['remoteip'] = $remoteIp;
+        }
+
+        $context = stream_context_create([
+            'http' => [
+                'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+                'method' => 'POST',
+                'content' => http_build_query($payload),
+                'timeout' => 15,
+            ],
+        ]);
+
+        try {
+            $response = @file_get_contents('https://api.hcaptcha.com/siteverify', false, $context);
+            if ($response === false) {
+                return false;
+            }
+            $decoded = json_decode($response, true);
+            return !empty($decoded['success']);
+        } catch (\Throwable $exception) {
+            return false;
+        }
+    }
+
+    private function getUsuarioByEmail(string $email): ?array
+    {
+        $sql = new Sql($this->db);
+        $select = $sql->select('usuario')->where(['str_correo' => $email]);
+        $row = $sql->prepareStatementForSqlObject($select)->execute()->current();
+        return $row ? (array) $row : null;
     }
 
     private function getPerfilById(int $id): ?array
     {
-        $sql    = new Sql($this->db);
+        $sql = new Sql($this->db);
         $select = $sql->select('perfil')->where(['id' => $id]);
-        $row    = $sql->prepareStatementForSqlObject($select)->execute()->current();
-        return $row ? (array)$row : null;
+        $row = $sql->prepareStatementForSqlObject($select)->execute()->current();
+        return $row ? (array) $row : null;
     }
 
-    private function getPermisosByPerfil(int $idPerfil): array
+    private function buildSessionPermissions(int $idPerfil): array
     {
-        $sql    = new Sql($this->db);
-        $select = $sql->select('permisos_perfil')->where(['id_perfil' => $idPerfil]);
-        $result = $sql->prepareStatementForSqlObject($select)->execute();
+        $model = new PermisoPerfilModel($this->db);
+        return $model->getSessionPermissionsForPerfil($idPerfil);
+    }
 
-        $permisos = [];
-        foreach ($result as $row) {
-            $permisos[(int)$row['id_modulo']] = [
-                'agregar'  => (bool)$row['bit_agregar'],
-                'editar'   => (bool)$row['bit_editar'],
-                'consulta' => (bool)$row['bit_consulta'],
-                'eliminar' => (bool)$row['bit_eliminar'],
-                'detalle'  => (bool)$row['bit_detalle'],
-            ];
-        }
-        return $permisos;
+    private function isAdminProfile(int $idPerfil): bool
+    {
+        $model = new PermisoPerfilModel($this->db);
+        return $model->profileIsAdmin($idPerfil);
     }
 
     private function updateLastLogin(int $usuarioId): void
     {
-        $sql    = new Sql($this->db);
+        $sql = new Sql($this->db);
         $update = $sql->update('usuario')
-            ->set(['ultimo_login' => new \Laminas\Db\Sql\Expression('CURRENT_TIMESTAMP')])
+            ->set(['ultimo_login' => new Expression('CURRENT_TIMESTAMP')])
             ->where(['id' => $usuarioId]);
+
         $sql->prepareStatementForSqlObject($update)->execute();
     }
 }

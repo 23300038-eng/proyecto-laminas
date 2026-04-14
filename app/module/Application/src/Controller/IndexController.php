@@ -4,586 +4,261 @@ declare(strict_types=1);
 
 namespace Application\Controller;
 
+use Laminas\Db\Adapter\AdapterInterface;
+use Laminas\Db\Sql\Expression;
+use Laminas\Db\Sql\Sql;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\ViewModel;
-use Laminas\Db\Sql\Sql;
-use Laminas\Db\Adapter\AdapterInterface;
-use Laminas\Diactoros\Response\JsonResponse;
+use Security\Model\ModuloModel;
+use Security\Model\SubmoduloModel;
+use Security\Support\AccessHelper;
 
 class IndexController extends AbstractActionController
 {
     private AdapterInterface $db;
-    
+    private ModuloModel $moduloModel;
+    private SubmoduloModel $submoduloModel;
+
     public function __construct(AdapterInterface $db)
     {
         $this->db = $db;
-    }
-
-    /**
-     * Cargar módulos para el sidebar
-     */
-    private function getModulos(): array
-    {
-        try {
-            $modulos = [];
-            if (isset($this->db)) {
-                $resultado = $this->db->query('SELECT * FROM modulo WHERE bit_activo = true ORDER BY int_orden');
-                $modulosDb = $resultado->execute();
-                
-                $modulosAgrupados = [
-                    'Administración' => [],
-                    'Otros' => []
-                ];
-                
-                foreach ($modulosDb as $modulo) {
-                    $item = [
-                        'nombre' => $modulo['str_nombre_modulo'],
-                        'icono' => $modulo['str_icono'] ?? '',
-                        'url' => '#'
-                    ];
-                    
-                    $nombre = strtolower($modulo['str_nombre_modulo']);
-                    if (strpos($nombre, 'perfil') !== false) {
-                        $item['url'] = $this->url()->fromRoute('security', ['action' => 'perfil']);
-                        $modulosAgrupados['Administración'][] = $item;
-                    } elseif (strpos($nombre, 'usuario') !== false) {
-                        $item['url'] = $this->url()->fromRoute('security', ['action' => 'usuario']);
-                        $modulosAgrupados['Administración'][] = $item;
-                    } elseif (strpos($nombre, 'modulo') !== false) {
-                        $item['url'] = $this->url()->fromRoute('security', ['action' => 'modulo']);
-                        $modulosAgrupados['Administración'][] = $item;
-                    } elseif (strpos($nombre, 'permiso') !== false) {
-                        $item['url'] = $this->url()->fromRoute('security', ['action' => 'permisos-perfil']);
-                        $modulosAgrupados['Administración'][] = $item;
-                    } else {
-                        $modulosAgrupados['Otros'][] = $item;
-                    }
-                }
-                
-                return array_filter($modulosAgrupados, fn($items) => !empty($items));
-            }
-        } catch (\Exception $e) {
-            // Silenciar errores de carga de módulos
-        }
-        
-        return [];
+        $this->moduloModel = new ModuloModel($db);
+        $this->submoduloModel = new SubmoduloModel($db);
     }
 
     public function indexAction()
     {
+        $menu = AccessHelper::buildMenu($this->db);
+
         return new ViewModel([
-            'modulos' => $this->getModulos()
+            'menu_modulos' => $menu,
+            'accesos_directos' => $menu,
+            'es_admin' => AccessHelper::isAdmin(),
+            'breadcrumbs' => [
+                ['nombre' => 'Inicio', 'url' => null],
+            ],
         ]);
     }
 
-    public function carruselAction()
+    public function miPerfilAction()
     {
+        AccessHelper::startSession();
+
+        $usuarioId = (int) ($_SESSION['usuario_id'] ?? 0);
+        $usuario = $this->getUsuarioActual($usuarioId);
+
+        if (!$usuario) {
+            return $this->redirect()->toRoute('auth', ['action' => 'logout']);
+        }
+
+        $error = null;
+        $success = null;
         $request = $this->getRequest();
 
         if ($request->isPost()) {
-            $file = $this->params()->fromFiles('imagen');
+            $data = $request->getPost()->toArray();
 
-            if ($file && $file['error'] === UPLOAD_ERR_OK) {
+            $payload = [
+                'str_nombre_usuario' => trim((string) ($data['str_nombre_usuario'] ?? '')),
+                'str_numero_celular' => preg_replace('/\D+/', '', (string) ($data['str_numero_celular'] ?? '')) ?? '',
+                'str_pwd' => trim((string) ($data['str_pwd'] ?? '')),
+            ];
 
-                $uploadDir = 'public/uploads/carrusel/';
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
+            $error = $this->validateUserData($payload, false);
+
+            if ($error === null) {
+                try {
+                    $this->actualizarUsuarioActual($usuarioId, $payload);
+                    $_SESSION['usuario_nombre'] = $payload['str_nombre_usuario'];
+                    $usuario = $this->getUsuarioActual($usuarioId);
+                    $success = 'Tus datos se actualizaron correctamente.';
+                } catch (\Throwable $exception) {
+                    $error = 'No fue posible actualizar tu perfil. Verifica que el nombre del empleado no esté repetido.';
                 }
-
-                $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-                $nombre = uniqid('img_') . '.' . $ext;
-
-                move_uploaded_file(
-                    $file['tmp_name'],
-                    $uploadDir . $nombre
-                );
-
-                // 🔥 CLAVE: redirigir después del POST
-                return $this->redirect()->toRoute(
-                    'application',
-                    ['action' => 'carrusel']
-                );
             }
-        }
-
-        // GET → cargar imágenes
-        $imagenes = [];
-        $dir = 'public/uploads/carrusel';
-
-        if (is_dir($dir)) {
-            $imagenes = array_values(
-                array_diff(scandir($dir), ['.', '..'])
-            );
         }
 
         return new ViewModel([
-            'imagenes' => $imagenes,
-            'modulos' => $this->getModulos(),
+            'usuario' => $usuario,
+            'error' => $error,
+            'success' => $success,
+            'menu_modulos' => AccessHelper::buildMenu($this->db),
+            'breadcrumbs' => [
+                ['nombre' => 'Inicio', 'url' => '/'],
+                ['nombre' => 'Mi Perfil', 'url' => null],
+            ],
         ]);
     }
 
-    public function baseDatosAction()
+    public function modularAction()
     {
-        $sql = new Sql($this->db);
-
-        $select = $sql->select('productos');
-        $stmt = $sql->prepareStatementForSqlObject($select);
-        $result = $stmt->execute();
-
-        return new ViewModel([
-            'productos' => $result,
-            'modulos' => $this->getModulos(),
-        ]);
-    }
-
-    public function capchaAction()
-    {
-        $request = $this->getRequest();
-        $viewModel = new ViewModel();
-
-        // Solo procesamos cuando se envía el formulario (POST)
-        if ($request->isPost()) {
-            $postData = $request->getPost()->toArray();
-            $token = $postData['h-captcha-response'] ?? '';
-
-            $message = 'Captcha no recibido';
-            $success = false;
-
-            if ($token !== '') {
-                $secret = 'ES_2207507e4662426fba1598f67036d8b0';
-
-                // Validación simple con file_get_contents
-                $url = 'https://hcaptcha.com/siteverify';
-                $data = [
-                    'secret'   => $secret,
-                    'response' => $token,
-                ];
-
-                $options = [
-                    'http' => [
-                        'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
-                        'method'  => 'POST',
-                        'content' => http_build_query($data),
-                    ],
-                ];
-
-                $context  = stream_context_create($options);
-                $result   = file_get_contents($url, false, $context);
-                $response = json_decode($result, true);
-
-                if ($response && !empty($response['success'])) {
-                    $success = true;
-                    $message = '¡Captcha válido! Puedes continuar con el formulario.';
-                    // Aquí podrías guardar datos, enviar email, etc.
-                } else {
-                    $message = 'Captcha inválido o expirado.';
-                    // Opcional: ver errores específicos
-                    // if (!empty($response['error-codes'])) {
-                    //     $message .= ' (' . implode(', ', $response['error-codes']) . ')';
-                    // }
-                }
-            }
-
-            // Pasamos los resultados a la vista para mostrar el mensaje
-            $viewModel->setVariables([
-                'success' => $success,
-                'message' => $message,
-                'modulos' => $this->getModulos(),
-            ]);
-        } else {
-            $viewModel->setVariables([
-                'modulos' => $this->getModulos(),
-            ]);
+        $moduleSlug = trim((string) $this->params()->fromRoute('modulo', ''));
+        $submoduleSlug = trim((string) $this->params()->fromRoute('submodulo', ''));
+        $requestPath = '/' . ltrim((string) $this->getRequest()->getUri()->getPath(), '/');
+        $requestPath = rtrim($requestPath, '/');
+        if ($requestPath === '') {
+            $requestPath = '/';
         }
 
-        // Siempre mostramos la vista (con o sin mensaje)
-        return $viewModel;
-    }
-
-    public function insertarEjemploAction()
-    {
-        $sql = new Sql($this->db);
-
-        $insert = $sql->insert('productos');
-        $insert->values([
-            'nombre' => 'Producto ejemplo',
-            'precio' => 100,
-            'categoria_id' => 1,
-        ]);
-
-        $stmt = $sql->prepareStatementForSqlObject($insert);
-        $stmt->execute();
-
-        return $this->redirect()->toRoute('application', [
-            'action' => 'base-datos'
-        ]);
-    }
-
-    public function borrarTodoAction()
-    {
-        $sql = new Sql($this->db);
-
-        $delete = $sql->delete('productos');
-        $stmt = $sql->prepareStatementForSqlObject($delete);
-        $stmt->execute();
-
-        return $this->redirect()->toRoute('application', [
-            'action' => 'base-datos'
-        ]);
-    }
-
-    public function eliminarImagenesAction()
-    {
-        $request = $this->getRequest();
-
-        if (! $request->isPost()) {
-            $this->getResponse()->setStatusCode(405);
-            $this->getResponse()->setContent(json_encode([
-                'success' => false,
-                'message' => 'Método no permitido. Usa POST.'
-            ]));
-            $this->getResponse()->getHeaders()->addHeaderLine('Content-Type', 'application/json');
-            return $this->getResponse();
-        }
-        $uploadsPath = realpath(__DIR__ . '/../../../../public/uploads/carrusel');
-
-        if ($uploadsPath === false || !is_dir($uploadsPath)) {
-            $this->getResponse()->setStatusCode(500);
-            $this->getResponse()->setContent(json_encode([
-                'success' => false,
-                'message' => 'La carpeta de uploads/carrusel no existe o no se puede acceder.'
-            ]));
-            $this->getResponse()->getHeaders()->addHeaderLine('Content-Type', 'application/json');
-            return $this->getResponse();
+        if ($moduleSlug === '') {
+            return $this->redirect()->toRoute('home');
         }
 
-        $files = glob($uploadsPath . '/*');
-        $deletedCount = 0;
+        $submodulo = null;
+        $modulo = null;
 
-        foreach ($files as $file) {
-            if (is_file($file) && unlink($file)) {
-                $deletedCount++;
+        if ($submoduleSlug !== '') {
+            $submodulo = $this->submoduloModel->getSubmoduloByRoute($requestPath);
+            if ($submodulo) {
+                $modulo = $this->moduloModel->getModulo((int) ($submodulo['id_modulo'] ?? 0));
             }
         }
 
-        $this->getResponse()->setStatusCode(200);
-        $this->getResponse()->setContent(json_encode([
-            'success' => true,
-            'message' => $deletedCount > 0 
-                ? "Se eliminaron $deletedCount imágenes correctamente." 
-                : "No había imágenes para eliminar."
+        if (!$modulo) {
+            $modulo = $this->moduloModel->getModuloBySlug($moduleSlug);
+        }
+
+        if (!$modulo) {
+            return $this->notFoundAction();
+        }
+
+        $allSubmodules = array_map(
+            static fn($row): array => (array) $row,
+            $this->submoduloModel->getSubmodulosActivosByModulo((int) $modulo['id'])
+        );
+        $accessibleSubmodules = array_values(array_filter($allSubmodules, static function ($submodulo): bool {
+            $submodulo = (array) $submodulo;
+            return AccessHelper::hasSubmodulePermissionById((int) ($submodulo['id'] ?? 0), 'consulta');
+        }));
+
+        if ($submoduleSlug !== '') {
+            if (!$submodulo) {
+                $submodulo = $this->submoduloModel->getSubmoduloBySlug((int) $modulo['id'], $submoduleSlug);
+            }
+
+            if (!$submodulo) {
+                return $this->notFoundAction();
+            }
+
+            if (!AccessHelper::hasSubmodulePermissionById((int) $submodulo['id'], 'consulta')) {
+                return $this->redirect()->toRoute('home');
+            }
+
+            return $this->renderModular('application/index/modular-submodule', [
+                'modulo' => $modulo,
+                'submodulo' => $submodulo,
+                'submodulos_accesibles' => $accessibleSubmodules,
+                'permisos_actuales' => AccessHelper::getSubmodulePermissionsById((int) $submodulo['id']),
+                'breadcrumbs' => [
+                    ['nombre' => 'Inicio', 'url' => '/'],
+                    ['nombre' => $modulo['str_nombre_modulo'], 'url' => '/modulos/' . AccessHelper::slugify((string) $modulo['str_nombre_modulo'])],
+                    ['nombre' => $submodulo['str_nombre_submodulo'], 'url' => null],
+                ],
+            ]);
+        }
+
+        if (!AccessHelper::hasModulePermissionById((int) $modulo['id'], 'consulta') && empty($accessibleSubmodules)) {
+            return $this->redirect()->toRoute('home');
+        }
+
+        return $this->renderModular('application/index/modular-module', [
+            'modulo' => $modulo,
+            'submodulos_accesibles' => $accessibleSubmodules,
+            'permisos_actuales' => AccessHelper::getModulePermissionsById((int) $modulo['id']),
+            'breadcrumbs' => [
+                ['nombre' => 'Inicio', 'url' => '/'],
+                ['nombre' => $modulo['str_nombre_modulo'], 'url' => null],
+            ],
+        ]);
+    }
+
+    private function renderModular(string $template, array $data): ViewModel
+    {
+        $view = new ViewModel(array_merge($data, [
+            'menu_modulos' => AccessHelper::buildMenu($this->db),
         ]));
-        $this->getResponse()->getHeaders()->addHeaderLine('Content-Type', 'application/json');
-
-        return $this->getResponse();
+        $view->setTemplate($template);
+        return $view;
     }
 
-    public function crudSegundaEvaluacionAction()
+    private function getUsuarioActual(int $usuarioId): ?array
     {
-        // ── Parámetros de búsqueda y paginación ───────────────────────
-        $search  = trim((string) $this->params()->fromQuery('search', ''));
-        $page    = max(1, (int) $this->params()->fromQuery('page', 1));
-        $perPage = 5;
-        $offset  = ($page - 1) * $perPage;
+        if ($usuarioId <= 0) {
+            return null;
+        }
 
+        try {
+            $row = $this->db->query(
+                'SELECT 
+                    u.*,
+                    p.str_nombre_perfil,
+                    e.str_nombre AS str_nombre_estado
+                 FROM usuario u
+                 INNER JOIN perfil p ON p.id = u.id_perfil
+                 LEFT JOIN estado_usuario e ON e.id = u.id_estado_usuario
+                 WHERE u.id = ?',
+                [$usuarioId]
+            )->current();
+
+            return $row ? (array) $row : null;
+        } catch (\Throwable $exception) {
+            return null;
+        }
+    }
+
+    private function actualizarUsuarioActual(int $usuarioId, array $data): void
+    {
         $sql = new Sql($this->db);
 
-        // ── Query de datos (con filtro + LIMIT/OFFSET) ─────────────────
-        $select = $sql->select('usuarios');
+        $updateData = [
+            'str_nombre_usuario' => $data['str_nombre_usuario'],
+            'str_numero_celular' => $data['str_numero_celular'] !== '' ? $data['str_numero_celular'] : null,
+            'actualizado_en' => new Expression('CURRENT_TIMESTAMP'),
+        ];
 
-        if ($search !== '') {
-            $like = '%' . $search . '%';
-            $select->where(function (\Laminas\Db\Sql\Where $where) use ($like) {
-                $where->nest()
-                    ->like('nombre',       $like)
-                    ->or->like('apellido_pat', $like)
-                    ->or->like('apellido_mat', $like)
-                    ->or->like('correo',       $like)
-                    ->or->like('telefono',     $like)
-                    ->unnest();
-            });
+        if (!empty($data['str_pwd'])) {
+            $updateData['str_pwd'] = password_hash((string) $data['str_pwd'], PASSWORD_BCRYPT);
         }
 
-        $select->limit($perPage)->offset($offset);
-        $stmt    = $sql->prepareStatementForSqlObject($select);
-        $result  = $stmt->execute();
-        $usuarios = iterator_to_array($result);
 
-        // ── Query de total (para calcular páginas) ─────────────────────
-        $countSelect = $sql->select('usuarios');
-        $countSelect->columns(['total' => new \Laminas\Db\Sql\Expression('COUNT(*)')]);
+        $update = $sql->update('usuario')
+            ->set($updateData)
+            ->where(['id' => $usuarioId]);
 
-        if ($search !== '') {
-            $like = '%' . $search . '%';
-            $countSelect->where(function (\Laminas\Db\Sql\Where $where) use ($like) {
-                $where->nest()
-                    ->like('nombre',       $like)
-                    ->or->like('apellido_pat', $like)
-                    ->or->like('apellido_mat', $like)
-                    ->or->like('correo',       $like)
-                    ->or->like('telefono',     $like)
-                    ->unnest();
-            });
+        $sql->prepareStatementForSqlObject($update)->execute();
+    }
+    private function validateUserData(array $data, bool $requirePassword = false): ?string
+    {
+        $nombre = trim((string) ($data['str_nombre_usuario'] ?? ''));
+        $telefonoCrudo = trim((string) ($data['str_numero_celular'] ?? ''));
+        $telefono = preg_replace('/\D+/', '', $telefonoCrudo) ?? '';
+        $password = (string) ($data['str_pwd'] ?? '');
+
+        if ($nombre === '') {
+            return 'El nombre de empleado es obligatorio.';
         }
 
-        $countStmt   = $sql->prepareStatementForSqlObject($countSelect);
-        $countResult = $countStmt->execute()->current();
-        $total       = (int) ($countResult['total'] ?? 0);
-        $totalPages  = max(1, (int) ceil($total / $perPage));
-
-        // Corregir página si excede el total
-        $page = min($page, $totalPages);
-
-        return new ViewModel([
-            'usuarios'   => $usuarios,
-            'search'     => $search,
-            'page'       => $page,
-            'perPage'    => $perPage,
-            'total'      => $total,
-            'totalPages' => $totalPages,
-            'modulos'    => $this->getModulos(),
-        ]);
-    }
-
-public function addUsuarioBdAction()
-{
-    $request = $this->getRequest();
-    if (!$request->isPost()) {
-        return new \Laminas\View\Model\JsonModel([
-            'success' => false,
-            'message' => 'Método no permitido',
-            'code' => 405
-        ]);
-    }
-
-    $content = $request->getContent();
-    $usuario = json_decode($content, true);
-
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        return new \Laminas\View\Model\JsonModel([
-            'success' => false,
-            'message' => 'JSON inválido: ' . json_last_error_msg(),
-            'code' => 400
-        ]);
-    }
-
-    // Validar que todos los campos existan
-    $requiredFields = ['nombre', 'apellido_pat', 'apellido_mat', 'telefono', 'correo', 'nacimiento'];
-    foreach ($requiredFields as $field) {
-        if (!isset($usuario[$field])) {
-            return new \Laminas\View\Model\JsonModel([
-                'success' => false,
-                'message' => "Falta el campo: $field",
-                'code' => 400
-            ]);
+        if (mb_strlen($nombre) < 3 || mb_strlen($nombre) > 120) {
+            return 'El nombre de empleado debe tener entre 3 y 120 caracteres.';
         }
-    }
 
-    try {
-        $sql = new Sql($this->db);
-        $insert = $sql->insert('usuarios');
-        $insert->values([
-            'nombre' => $usuario['nombre'],
-            'apellido_pat' => $usuario['apellido_pat'],
-            'apellido_mat' => $usuario['apellido_mat'],
-            'correo' => $usuario['correo'],
-            'nacimiento' => $usuario['nacimiento'],
-            'telefono' => $usuario['telefono']
-        ]);
-        $stmt = $sql->prepareStatementForSqlObject($insert);
-        $stmt->execute();
+        if (!preg_match('/^[\p{L}\s\.\-]+$/u', $nombre)) {
+            return 'El nombre de empleado solo puede contener letras, espacios, puntos y guiones.';
+        }
 
-        return new \Laminas\View\Model\JsonModel([
-            'success' => true,
-            'message' => 'Usuario agregado exitosamente',
-            'code' => 200
-        ]);
-    } catch (\Exception $e) {
-        return new \Laminas\View\Model\JsonModel([
-            'success' => false,
-            'message' => 'Error en la base de datos: ' . $e->getMessage(),
-            'code' => 500
-        ]);
+        if ($telefono !== '' && !preg_match('/^\d{10}$/', $telefono)) {
+            return 'El teléfono debe contener exactamente 10 dígitos.';
+        }
+
+        if ($requirePassword && $password === '') {
+            return 'La contraseña es obligatoria.';
+        }
+
+        if ($password !== '' && mb_strlen($password) < 8) {
+            return 'La contraseña debe tener al menos 8 caracteres.';
+        }
+
+        return null;
     }
 }
 
-
-public function deleteUsuarioAction()
-{
-    $request = $this->getRequest();
-    
-    if (!$request->isPost()) {
-        return new \Laminas\View\Model\JsonModel([
-            'success' => false,
-            'message' => 'Método no permitido',
-            'code' => 405
-        ]);
-    }
-
-    $content = $request->getContent();
-    $data = json_decode($content, true);
-
-    if (json_last_error() !== JSON_ERROR_NONE || !isset($data['id']) || !is_numeric($data['id'])) {
-        return new \Laminas\View\Model\JsonModel([
-            'success' => false,
-            'message' => 'ID de usuario inválido',
-            'code' => 400
-        ]);
-    }
-
-    $id = (int) $data['id'];
-
-    try {
-        $sql = new Sql($this->db);
-        $delete = $sql->delete('usuarios');
-        $delete->where(['id' => $id]);
-        
-        $stmt = $sql->prepareStatementForSqlObject($delete);
-        $result = $stmt->execute();
-
-        if ($result->getAffectedRows() === 0) {
-            return new \Laminas\View\Model\JsonModel([
-                'success' => false,
-                'message' => 'No se encontró el usuario o ya fue eliminado',
-                'code' => 404
-            ]);
-        }
-
-        return new \Laminas\View\Model\JsonModel([
-            'success' => true,
-            'message' => 'Usuario eliminado correctamente',
-            'code' => 200
-        ]);
-    } catch (\Exception $e) {
-        return new \Laminas\View\Model\JsonModel([
-            'success' => false,
-            'message' => 'Error en la base de datos: ' . $e->getMessage(),
-            'code' => 500
-        ]);
-    }
-}
-
-
-public function editUsuarioAction()
-{
-    $id = (int) $this->params()->fromRoute('id', 0);
-    
-    if ($id <= 0) {
-        // Opcional: redirigir o mostrar error
-        return $this->redirect()->toRoute('application', ['action' => 'crudSegundaEvaluacion']);
-    }
-
-    $sql = new Sql($this->db);
-    $select = $sql->select('usuarios');
-    $select->where(['id' => $id]);
-    
-    $statement = $sql->prepareStatementForSqlObject($select);
-    $result = $statement->execute();
-    
-    $usuario = $result->current();
-    
-    if (!$usuario) {
-        // Usuario no encontrado
-        // Puedes agregar un mensaje flash o simplemente redirigir
-        return $this->redirect()->toRoute('application', ['action' => 'crudSegundaEvaluacion']);
-    }
-
-    // Retornamos la vista con los datos del usuario
-    return new ViewModel([
-        'usuario' => $usuario,
-        'id'      => $id,
-        'modulos' => $this->getModulos()
-    ]);
-}
-
-
-
-public function updateUsuarioAction()
-{
-    $request = $this->getRequest();
-    
-    if (!$request->isPost()) {
-        return new \Laminas\View\Model\JsonModel([
-            'success' => false,
-            'message' => 'Método no permitido',
-            'code' => 405
-        ]);
-    }
-
-    $content = $request->getContent();
-    $usuario = json_decode($content, true);
-
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        return new \Laminas\View\Model\JsonModel([
-            'success' => false,
-            'message' => 'JSON inválido: ' . json_last_error_msg(),
-            'code' => 400
-        ]);
-    }
-
-    // Validar que todos los campos existan, incluyendo id
-    $requiredFields = ['id', 'nombre', 'apellido_pat', 'apellido_mat', 'telefono', 'correo', 'nacimiento'];
-    foreach ($requiredFields as $field) {
-        if (!isset($usuario[$field])) {
-            return new \Laminas\View\Model\JsonModel([
-                'success' => false,
-                'message' => "Falta el campo: $field",
-                'code' => 400
-            ]);
-        }
-    }
-
-    $id = (int) $usuario['id'];
-    if ($id <= 0) {
-        return new \Laminas\View\Model\JsonModel([
-            'success' => false,
-            'message' => 'ID inválido',
-            'code' => 400
-        ]);
-    }
-
-    try {
-        $sql = new Sql($this->db);
-        $update = $sql->update('usuarios');
-        $update->set([
-            'nombre' => $usuario['nombre'],
-            'apellido_pat' => $usuario['apellido_pat'],
-            'apellido_mat' => $usuario['apellido_mat'],
-            'correo' => $usuario['correo'],
-            'nacimiento' => $usuario['nacimiento'],
-            'telefono' => $usuario['telefono']
-        ]);
-        $update->where(['id' => $id]);
-        
-        $stmt = $sql->prepareStatementForSqlObject($update);
-        $result = $stmt->execute();
-
-        if ($result->getAffectedRows() === 0) {
-            return new \Laminas\View\Model\JsonModel([
-                'success' => false,
-                'message' => 'No se encontró el usuario o no hubo cambios',
-                'code' => 404
-            ]);
-        }
-
-        return new \Laminas\View\Model\JsonModel([
-            'success' => true,
-            'message' => 'Usuario actualizado exitosamente',
-            'code' => 200
-        ]);
-    } catch (\Exception $e) {
-        return new \Laminas\View\Model\JsonModel([
-            'success' => false,
-            'message' => 'Error en la base de datos: ' . $e->getMessage(),
-            'code' => 500
-        ]);
-    }
-}
-
-
-    public function addUsuarioAction(){
-        return new ViewModel([
-            'modulos' => $this->getModulos()
-        ]);
-    }
-}

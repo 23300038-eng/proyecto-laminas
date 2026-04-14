@@ -39,7 +39,7 @@ class ModuleHelper
                     $item['url'] = $url('security', ['action' => 'modulo']);
                     $modulosAgrupados['Administración'][] = $item;
                 } elseif (strpos($nombre, 'permiso') !== false) {
-                    $item['url'] = $url('security', ['action' => 'permisos-perfil']);
+                    $item['url'] = $url('security', ['action' => 'permiso-perfil']);
                     $modulosAgrupados['Administración'][] = $item;
                 } else {
                     $modulosAgrupados['Otros'][] = $item;

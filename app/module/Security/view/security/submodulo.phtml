@@ -1,0 +1,25 @@
+<?php
+$esAdmin = !empty($_SESSION['es_admin'] ?? false) || !empty($_SESSION['bit_administrador'] ?? false);
+$p = $permisos_modulo ?? ['agregar' => $esAdmin, 'editar' => $esAdmin, 'consulta' => $esAdmin, 'eliminar' => $esAdmin, 'detalle' => $esAdmin];
+$moduloFiltro = (int) ($modulo_filtro ?? 0);
+?>
+<?php if (!empty($breadcrumbs)): ?><ul class="breadcrumbs"><?php foreach ($breadcrumbs as $breadcrumb): ?><li><?php if (!empty($breadcrumb['url'])): ?><a href="<?= htmlspecialchars($breadcrumb['url']) ?>"><?= htmlspecialchars($breadcrumb['nombre']) ?></a><?php else: ?><?= htmlspecialchars($breadcrumb['nombre']) ?><?php endif; ?></li><?php endforeach; ?></ul><?php endif; ?>
+<div class="page-header"><div><h1 class="page-title">Gestión de Submódulos</h1><p class="page-subtitle">Crea nuevas subvistas y asígnalas a sus módulos de forma modular.</p></div><?php if (!empty($p['agregar'])): ?><a href="/security/submodulo-add" class="btn btn-primary">+ Crear Submódulo</a><?php endif; ?></div>
+<form method="GET" class="card" style="margin-bottom:1rem;"><div class="card-body" style="display:flex;gap:0.75rem;align-items:end;flex-wrap:wrap;"><div class="form-group" style="margin:0;min-width:260px;"><label class="form-label" for="modulo">Filtrar por módulo</label><select class="form-control" id="modulo" name="modulo"><option value="0">Todos</option><?php foreach (($modulos_select ?? []) as $id => $nombre): ?><option value="<?= (int) $id ?>" <?= $moduloFiltro === (int) $id ? 'selected' : '' ?>><?= htmlspecialchars($nombre) ?></option><?php endforeach; ?></select></div><button type="submit" class="btn btn-outline">Filtrar</button><?php if ($moduloFiltro > 0): ?><a href="/security/submodulo" class="btn btn-secondary">Quitar filtro</a><?php endif; ?></div></form>
+<div class="card"><div class="card-body"><table class="table"><thead><tr><th>Módulo</th><th>Submódulo</th><th>Ruta</th><th>Orden</th><th>Activo</th><?php if (!empty($p['detalle']) || !empty($p['editar']) || !empty($p['eliminar'])): ?><th>Acciones</th><?php endif; ?></tr></thead><tbody>
+<?php if (!empty($submodulos)): foreach ($submodulos as $submodulo): ?>
+<tr>
+    <td><?= htmlspecialchars($submodulo['str_nombre_modulo'] ?? '') ?></td>
+    <td><?= htmlspecialchars($submodulo['str_nombre_submodulo'] ?? '') ?></td>
+    <td><code><?= htmlspecialchars($submodulo['str_ruta'] ?? '') ?></code></td>
+    <td><?= (int) ($submodulo['int_orden'] ?? 0) ?></td>
+    <td><?= !empty($submodulo['bit_activo']) ? 'Sí' : 'No' ?></td>
+    <?php if (!empty($p['detalle']) || !empty($p['editar']) || !empty($p['eliminar'])): ?>
+        <td><div class="btn-group"><?php if (!empty($p['detalle'])): ?><a href="/security/submodulo-detalle/<?= (int) $submodulo['id'] ?>" class="btn btn-secondary">Ver</a><?php endif; ?><?php if (!empty($p['editar'])): ?><a href="/security/submodulo-edit/<?= (int) $submodulo['id'] ?>" class="btn btn-secondary">Editar</a><?php endif; ?><?php if (!empty($p['eliminar'])): ?><a href="/security/submodulo-delete/<?= (int) $submodulo['id'] ?>" class="btn btn-danger" onclick="return confirm('¿Eliminar este submódulo?')">Eliminar</a><?php endif; ?></div></td>
+    <?php endif; ?>
+</tr>
+<?php endforeach; else: ?>
+<tr><td colspan="6" style="text-align:center;padding:2rem;">No hay submódulos registrados.</td></tr>
+<?php endif; ?>
+</tbody></table></div></div>
+<?php if (!empty($pages) && $pages > 1): ?><div class="pagination"><?php if ($page > 1): ?><a href="?page=1<?= $moduloFiltro > 0 ? '&modulo=' . $moduloFiltro : '' ?>">« Primera</a><a href="?page=<?= $page - 1 ?><?= $moduloFiltro > 0 ? '&modulo=' . $moduloFiltro : '' ?>">‹ Anterior</a><?php endif; ?><?php for ($i=1;$i<=$pages;$i++): ?><?php if ($i===$page): ?><span class="active"><?= $i ?></span><?php else: ?><a href="?page=<?= $i ?><?= $moduloFiltro > 0 ? '&modulo=' . $moduloFiltro : '' ?>"><?= $i ?></a><?php endif; ?><?php endfor; ?><?php if ($page < $pages): ?><a href="?page=<?= $page + 1 ?><?= $moduloFiltro > 0 ? '&modulo=' . $moduloFiltro : '' ?>">Siguiente ›</a><a href="?page=<?= $pages ?><?= $moduloFiltro > 0 ? '&modulo=' . $moduloFiltro : '' ?>">Última »</a><?php endif; ?></div><?php endif; ?>

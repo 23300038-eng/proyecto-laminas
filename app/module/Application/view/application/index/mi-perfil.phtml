@@ -1,0 +1,121 @@
+<?php if (!empty($breadcrumbs)): ?>
+    <ul class="breadcrumbs">
+        <?php foreach ($breadcrumbs as $breadcrumb): ?>
+            <li>
+                <?php if (!empty($breadcrumb['url'])): ?>
+                    <a href="<?= htmlspecialchars($breadcrumb['url']) ?>"><?= htmlspecialchars($breadcrumb['nombre']) ?></a>
+                <?php else: ?>
+                    <?= htmlspecialchars($breadcrumb['nombre']) ?>
+                <?php endif; ?>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+<?php endif; ?>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Mi Perfil</h1>
+        <p class="page-subtitle">Aquí puedes consultar y actualizar los datos de tu cuenta actual.</p>
+    </div>
+</div>
+
+<?php if (!empty($success)): ?>
+    <div style="margin-bottom:1rem;padding:0.95rem 1rem;border:1px solid #bbf7d0;background:#f0fdf4;color:#166534;border-radius:12px;">
+        <?= htmlspecialchars($success) ?>
+    </div>
+<?php endif; ?>
+
+<?php if (!empty($error)): ?>
+    <div style="margin-bottom:1rem;padding:0.95rem 1rem;border:1px solid #fecaca;background:#fef2f2;color:#b91c1c;border-radius:12px;">
+        <?= htmlspecialchars($error) ?>
+    </div>
+<?php endif; ?>
+
+<div style="display:grid;grid-template-columns:320px 1fr;gap:1.5rem;align-items:start;">
+    <aside class="card">
+        <div class="card-body" style="text-align:center;">
+            <div style="width:110px;height:110px;border-radius:999px;overflow:hidden;background:#dbeafe;margin:0 auto 1rem;display:flex;align-items:center;justify-content:center;color:#1d4ed8;font-size:2rem;font-weight:700;">
+                <?= htmlspecialchars(mb_strtoupper(mb_substr((string) ($usuario['str_nombre_usuario'] ?? 'U'), 0, 1))) ?>
+            </div>
+
+            <h2 style="margin:0 0 0.35rem;font-size:1.2rem;"><?= htmlspecialchars($usuario['str_nombre_usuario'] ?? '') ?></h2>
+            <p style="margin:0;color:#64748b;"><?= htmlspecialchars($usuario['str_nombre_perfil'] ?? 'Sin perfil') ?></p>
+
+            <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #e2e8f0;display:grid;gap:0.7rem;text-align:left;">
+                <div>
+                    <strong style="display:block;">Correo</strong>
+                    <span style="color:#475569;"><?= htmlspecialchars($usuario['str_correo'] ?? '') ?></span>
+                </div>
+                <div>
+                    <strong style="display:block;">Estado</strong>
+                    <span style="color:#475569;"><?= htmlspecialchars($usuario['str_nombre_estado'] ?? '') ?></span>
+                </div>
+                <div>
+                    <strong style="display:block;">Teléfono</strong>
+                    <span style="color:#475569;"><?= htmlspecialchars($usuario['str_numero_celular'] ?? 'No capturado') ?></span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <section class="card">
+        <div class="card-header">
+            <h2 style="margin:0;font-size:1.1rem;">Editar mis datos</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data" style="display:grid;gap:1rem;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div class="form-group" style="margin:0;">
+                        <label class="form-label" for="str_nombre_usuario">Nombre de Empleado *</label>
+                        <input class="form-control" type="text" id="str_nombre_usuario" name="str_nombre_usuario" required minlength="3" maxlength="120" pattern="[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s.\-]{3,120}" value="<?= htmlspecialchars($usuario['str_nombre_usuario'] ?? '') ?>">
+                    </div>
+
+                    <div class="form-group" style="margin:0;">
+                        <label class="form-label" for="str_numero_celular">Número celular</label>
+                        <input class="form-control" type="text" id="str_numero_celular" name="str_numero_celular" maxlength="10" inputmode="numeric" pattern="\d{10}" placeholder="5512345678" value="<?= htmlspecialchars($usuario['str_numero_celular'] ?? '') ?>" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div class="form-group" style="margin:0;">
+                        <label class="form-label" for="str_correo_visual">Correo electrónico</label>
+                        <input class="form-control" type="email" id="str_correo_visual" value="<?= htmlspecialchars($usuario['str_correo'] ?? '') ?>" disabled>
+                    </div>
+
+                    <div class="form-group" style="margin:0;">
+                        <label class="form-label" for="str_perfil_visual">Perfil asignado</label>
+                        <input class="form-control" type="text" id="str_perfil_visual" value="<?= htmlspecialchars($usuario['str_nombre_perfil'] ?? '') ?>" disabled>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div class="form-group" style="margin:0;">
+                        <label class="form-label" for="str_pwd">Nueva contraseña</label>
+                        <input class="form-control" type="password" id="str_pwd" name="str_pwd" minlength="8" maxlength="120" placeholder="Déjala vacía para no cambiarla">
+                    </div>
+
+                </div>
+
+                <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:0.5rem;">
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                    <a href="/" class="btn btn-secondary">Volver a inicio</a>
+                </div>
+
+                <p style="margin:0;color:#64748b;font-size:0.9rem;">
+                    Tu perfil y tu correo solo se muestran como referencia y no se pueden modificar desde esta vista. El número celular acepta únicamente 10 dígitos numéricos.
+                </p>
+            </form>
+        </div>
+    </section>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const phone = document.getElementById('str_numero_celular');
+  if (phone) {
+    phone.addEventListener('input', function () {
+      this.value = this.value.replace(/\D+/g, '').slice(0, 10);
+    });
+  }
+});
+</script>

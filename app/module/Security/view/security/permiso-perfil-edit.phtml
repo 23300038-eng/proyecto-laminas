@@ -1,53 +1,9 @@
-<div class="page-header">
-    <h2>Editar Permiso</h2>
-</div>
-
-<form method="POST" style="max-width: 600px;">
-    <div class="form-row">
-        <div class="form-group">
-            <label for="id_modulo">Módulo (No editable)</label>
-            <input type="text" disabled value="<?php echo htmlspecialchars($permiso['str_nombre_modulo']); ?>">
-            <input type="hidden" name="id_modulo" value="<?php echo htmlspecialchars($permiso['id_modulo']); ?>">
-        </div>
-
-        <div class="form-group">
-            <label for="id_perfil">Perfil (No editable)</label>
-            <input type="text" disabled value="<?php echo htmlspecialchars($permiso['str_nombre_perfil']); ?>">
-            <input type="hidden" name="id_perfil" value="<?php echo htmlspecialchars($permiso['id_perfil']); ?>">
-        </div>
-    </div>
-
-    <fieldset style="border: 1px solid #ddd; padding: 1rem; border-radius: 4px; margin: 1.5rem 0;">
-        <legend style="padding: 0 0.5rem;">Permisos</legend>
-
-        <div class="form-check">
-            <input type="checkbox" id="bit_agregar" name="bit_agregar" value="1" <?php echo ($permiso['bit_agregar'] ?? false) ? 'checked' : ''; ?>>
-            <label for="bit_agregar">Agregar / Crear</label>
-        </div>
-
-        <div class="form-check">
-            <input type="checkbox" id="bit_editar" name="bit_editar" value="1" <?php echo ($permiso['bit_editar'] ?? false) ? 'checked' : ''; ?>>
-            <label for="bit_editar">Editar / Modificar</label>
-        </div>
-
-        <div class="form-check">
-            <input type="checkbox" id="bit_consulta" name="bit_consulta" value="1" <?php echo ($permiso['bit_consulta'] ?? false) ? 'checked' : ''; ?>>
-            <label for="bit_consulta">Consultar / Ver</label>
-        </div>
-
-        <div class="form-check">
-            <input type="checkbox" id="bit_eliminar" name="bit_eliminar" value="1" <?php echo ($permiso['bit_eliminar'] ?? false) ? 'checked' : ''; ?>>
-            <label for="bit_eliminar">Eliminar</label>
-        </div>
-
-        <div class="form-check">
-            <input type="checkbox" id="bit_detalle" name="bit_detalle" value="1" <?php echo ($permiso['bit_detalle'] ?? false) ? 'checked' : ''; ?>>
-            <label for="bit_detalle">Ver Detalle</label>
-        </div>
-    </fieldset>
-
-    <div class="btn-group" style="margin-top: 2rem;">
-        <button type="submit" class="btn btn-primary">Actualizar</button>
-        <a href="/security/permiso-perfil" class="btn btn-secondary">Cancelar</a>
-    </div>
-</form>
+<?php if (!empty($breadcrumbs)): ?><ul class="breadcrumbs"><?php foreach ($breadcrumbs as $breadcrumb): ?><li><?php if (!empty($breadcrumb['url'])): ?><a href="<?= htmlspecialchars($breadcrumb['url']) ?>"><?= htmlspecialchars($breadcrumb['nombre']) ?></a><?php else: ?><?= htmlspecialchars($breadcrumb['nombre']) ?><?php endif; ?></li><?php endforeach; ?></ul><?php endif; ?>
+<div class="page-header"><div><h1 class="page-title">Editar Permiso</h1><p class="page-subtitle">Actualiza las acciones permitidas sobre este recurso.</p></div></div>
+<form method="POST" class="card"><div class="card-body" style="max-width:760px;display:grid;gap:1rem;">
+<div><strong>Perfil:</strong> <?= htmlspecialchars($permiso['str_nombre_perfil'] ?? '') ?></div>
+<div><strong>Módulo:</strong> <?= htmlspecialchars($permiso['str_nombre_modulo'] ?? '') ?></div>
+<div><strong>Submódulo:</strong> <?= htmlspecialchars($permiso['str_nombre_submodulo'] ?? '—') ?></div>
+<div style="display:flex;gap:1rem;flex-wrap:wrap;"><label><input type="checkbox" name="bit_consulta" value="1" <?= !empty($permiso['bit_consulta']) ? 'checked' : '' ?>> Ver</label><label><input type="checkbox" name="bit_agregar" value="1" <?= !empty($permiso['bit_agregar']) ? 'checked' : '' ?>> Crear</label><label><input type="checkbox" name="bit_editar" value="1" <?= !empty($permiso['bit_editar']) ? 'checked' : '' ?>> Editar</label><label><input type="checkbox" name="bit_eliminar" value="1" <?= !empty($permiso['bit_eliminar']) ? 'checked' : '' ?>> Eliminar</label><label><input type="checkbox" name="bit_detalle" value="1" <?= !empty($permiso['bit_detalle']) ? 'checked' : '' ?>> Detalle</label></div>
+<div class="btn-group"><button type="submit" class="btn btn-primary">Actualizar permiso</button><a href="/security/permiso-perfil" class="btn btn-secondary">Cancelar</a></div>
+</div></form>

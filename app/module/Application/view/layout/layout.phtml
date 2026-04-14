@@ -5,231 +5,152 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Novafarma - Sistema Administrativo</title>
     <link rel="stylesheet" href="<?= $this->basePath() ?>/css/theme.css">
-    <script>var basePath = '<?= $this->basePath() ?>';</script>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        
-        .navbar {
-            background: linear-gradient(135deg, #0066cc 0%, #004a99 100%);
-            color: white;
-            padding: 0;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        .navbar-inner {
-            max-width: 100%;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 2rem;
-            height: 70px;
-        }
-        
-        .navbar-brand {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: white;
-            text-decoration: none;
-            margin: 0;
-        }
-        
-        .navbar-menu {
-            display: flex;
-            align-items: center;
-            gap: 0;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-            flex: 1;
-            margin-left: 2rem;
-        }
-        
-        .navbar-menu li {
-            position: relative;
-        }
-        
-        .navbar-menu > li > a {
-            color: white;
-            text-decoration: none;
-            padding: 0.75rem 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            white-space: nowrap;
-        }
-        
-        .navbar-menu > li > a:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-        }
-        
-        .navbar-submenu {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            background: white;
-            color: #333;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-            min-width: 200px;
-            border-radius: 4px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            display: none;
-            z-index: 1000;
-        }
-        
-        .navbar-menu > li:hover > .navbar-submenu {
-            display: block;
-        }
-        
-        .navbar-submenu li {
-            border-bottom: 1px solid #f0f0f0;
-        }
-        
-        .navbar-submenu li:last-child {
-            border-bottom: none;
-        }
-        
-        .navbar-submenu a {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1rem;
-            color: #333;
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-        
-        .navbar-submenu a:hover {
-            background-color: #f5f5f5;
-            padding-left: 1.25rem;
-        }
-        
-        .navbar-user {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-left: auto;
-        }
-        
-        .navbar-user-info {
-            text-align: right;
-            font-size: 0.9rem;
-        }
-        
-        .navbar-user-name {
-            font-weight: 600;
-            display: block;
-        }
-        
-        .navbar-user-role {
-            font-size: 0.8rem;
-            opacity: 0.9;
-        }
-        
-        .navbar-logout {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-        
-        .navbar-logout:hover {
-            background-color: rgba(255, 255, 255, 0.3);
-            border-color: white;
-        }
-        
-        .content-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        main.main {
-            flex: 1;
+        body { margin: 0; min-height: 100vh; background: #f8fafc; color: #0f172a; }
+        .topbar { position: sticky; top: 0; z-index: 200; background: linear-gradient(135deg, #0f4aa3 0%, #2563eb 100%); box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12); }
+        .topbar-inner { max-width: 1440px; margin: 0 auto; min-height: 74px; display: flex; align-items: center; gap: 1rem; padding: 0 1.5rem; }
+        .brand-link { color: #ffffff; text-decoration: none; font-weight: 800; font-size: 1.35rem; white-space: nowrap; }
+        .main-nav { display: flex; align-items: center; gap: 0.35rem; list-style: none; margin: 0; padding: 0; flex: 1; min-width: 0; }
+        .main-nav > li { position: relative; }
+        .main-nav > li.has-submenu::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 16px; }
+        .main-nav > li > a { display: inline-flex; align-items: center; gap: 0.4rem; color: #ffffff; text-decoration: none; padding: 0.85rem 1rem; border-radius: 12px; font-weight: 600; transition: background-color 0.18s ease, transform 0.18s ease; white-space: nowrap; }
+        .main-nav > li.has-submenu > a::after { content: '▾'; font-size: 0.8rem; opacity: 0.9; }
+        .main-nav > li > a:hover,
+        .main-nav > li.menu-open > a,
+        .main-nav > li:focus-within > a { background: rgba(255, 255, 255, 0.14); transform: translateY(-1px); }
+        .submenu { position: absolute; top: calc(100% + 10px); left: 0; min-width: 230px; background: #ffffff; border-radius: 16px; box-shadow: 0 18px 38px rgba(15, 23, 42, 0.16); padding: 0.5rem; list-style: none; display: none; margin: 0; z-index: 250; }
+        .main-nav > li:hover .submenu,
+        .main-nav > li.menu-open .submenu,
+        .main-nav > li:focus-within .submenu { display: block; }
+        .submenu li a { display: block; padding: 0.75rem 0.85rem; border-radius: 12px; color: #0f172a; text-decoration: none; font-weight: 500; }
+        .submenu li a:hover { background: #eff6ff; color: #1d4ed8; }
+        .topbar-user { display: flex; align-items: center; gap: 0.8rem; margin-left: auto; }
+        .user-avatar { width: 42px; height: 42px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); overflow: hidden; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 1rem; font-weight: 700; }
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .user-meta { color: #ffffff; min-width: 0; }
+        .user-meta strong, .user-meta span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-meta strong { font-size: 0.95rem; }
+        .user-meta span { font-size: 0.8rem; opacity: 0.9; }
+        .user-links { display: flex; align-items: center; gap: 0.5rem; }
+        .user-links a { color: #ffffff; text-decoration: none; padding: 0.68rem 0.9rem; border-radius: 12px; font-weight: 600; background: rgba(255, 255, 255, 0.12); }
+        .user-links a:hover { background: rgba(255, 255, 255, 0.22); }
+        .app-shell { min-height: calc(100vh - 74px); display: flex; flex-direction: column; }
+        .main-content { flex: 1; }
+        .container { max-width: 1440px; margin: 0 auto; padding: 2rem 1.5rem 2.5rem; }
+        .footer { border-top: 1px solid #e2e8f0; background: #ffffff; padding: 1rem 1.5rem; color: #64748b; text-align: center; font-size: 0.9rem; }
+        @media (max-width: 1100px) {
+            .topbar-inner { flex-wrap: wrap; padding-top: 0.9rem; padding-bottom: 0.9rem; }
+            .main-nav { order: 3; width: 100%; flex-wrap: wrap; }
+            .submenu { position: static; display: block; margin-top: 0.5rem; box-shadow: none; border-radius: 12px; }
         }
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="navbar-inner">
-            <h1 class="navbar-brand">Novafarma</h1>
-            
-            <?php if (!empty($modulos) && is_array($modulos)): ?>
-                <ul class="navbar-menu">
-                    <?php foreach ($modulos as $seccion => $items): ?>
-                        <li>
-                            <a href="#" title="<?= htmlspecialchars($seccion) ?>">
-                                <?= htmlspecialchars($seccion) ?>
-                            </a>
-                            <ul class="navbar-submenu">
-                                <?php foreach ($items as $item): ?>
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$menu = is_array($menu_modulos ?? null) ? $menu_modulos : (is_array($_SESSION['menu_modulos_cache'] ?? null) ? $_SESSION['menu_modulos_cache'] : (is_array($modulos ?? null) ? $modulos : []));
+$nombreUsuario = $_SESSION['usuario_nombre'] ?? 'Usuario';
+$nombrePerfil = $_SESSION['perfil_nombre'] ?? ($_SESSION['usuario_rol'] ?? 'Usuario');
+?>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a href="/" class="brand-link">Novafarma</a>
+
+            <ul class="main-nav">
+                <li><a href="/">Inicio</a></li>
+
+                <?php foreach ($menu as $modulo): ?>
+                    <li class="<?= !empty($modulo['items']) ? 'has-submenu' : '' ?>">
+                        <a href="<?= htmlspecialchars($modulo['url'] ?? '#') ?>">
+                            <?= htmlspecialchars($modulo['nombre'] ?? 'Módulo') ?>
+                        </a>
+
+                        <?php if (!empty($modulo['items'])): ?>
+                            <ul class="submenu">
+                                <?php foreach ($modulo['items'] as $item): ?>
                                     <li>
-                                        <a href="<?= htmlspecialchars($item['url']) ?>" title="<?= htmlspecialchars($item['nombre']) ?>">
-                                            <?php if (!empty($item['icono'])): ?>
-                                                <span><?= htmlspecialchars($item['icono']) ?></span>
-                                            <?php endif; ?>
-                                            <?= htmlspecialchars($item['nombre']) ?>
+                                        <a href="<?= htmlspecialchars($item['url'] ?? '#') ?>">
+                                            <?= htmlspecialchars($item['nombre'] ?? '') ?>
                                         </a>
                                     </li>
                                 <?php endforeach; ?>
                             </ul>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            <?php else: ?>
-                <ul class="navbar-menu">
-                    <li>
-                        <a href="#" title="Administración">Administración</a>
-                        <ul class="navbar-submenu">
-                            <li><a href="<?= $this->url('security', ['action'=>'perfil']) ?>">Perfiles</a></li>
-                            <li><a href="<?= $this->url('security', ['action'=>'usuario']) ?>">Usuarios</a></li>
-                            <li><a href="<?= $this->url('security', ['action'=>'modulo']) ?>">Módulos</a></li>
-                        </ul>
+                        <?php endif; ?>
                     </li>
-                    <li>
-                        <a href="<?= $this->url('dashboard', ['action'=>'index']) ?>">Dashboard</a>
-                    </li>
-                </ul>
-            <?php endif; ?>
-            
-            <div class="navbar-user">
-                <div class="navbar-user-info">
-                    <span class="navbar-user-name"><?php 
-                        if (session_status() === PHP_SESSION_NONE) session_start();
-                        echo htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Usuario'); 
-                    ?></span>
-                    <span class="navbar-user-role"><?= htmlspecialchars($_SESSION['usuario_rol'] ?? 'Usuario') ?></span>
+                <?php endforeach; ?>
+            </ul>
+
+            <div class="topbar-user">
+                <div class="user-avatar">
+                    <?= htmlspecialchars(mb_strtoupper(mb_substr($nombreUsuario, 0, 1))) ?>
                 </div>
-                <a href="<?= $this->url('auth', ['action'=>'logout']) ?>" class="navbar-logout">Salir</a>
+
+                <div class="user-meta">
+                    <strong><?= htmlspecialchars($nombreUsuario) ?></strong>
+                    <span><?= htmlspecialchars($nombrePerfil) ?></span>
+                </div>
+
+                <div class="user-links">
+                    <a href="/mi-perfil">Mi Perfil</a>
+                    <a href="<?= $this->url('auth', ['action' => 'logout']) ?>">Salir</a>
+                </div>
             </div>
         </div>
-    </nav>
+    </header>
 
-    <div class="content-wrapper">
-        <main class="main">
+    <div class="app-shell">
+        <main class="main-content">
             <div class="container">
                 <?= $this->content ?>
             </div>
         </main>
-        <footer class="footer">Novafarma • Sist. Administrativo de Farmacéutica • &copy; <?= date('Y') ?></footer>
+
+        <footer class="footer">
+            Novafarma · Plataforma administrativa para gestión farmacéutica · &copy; <?= date('Y') ?>
+        </footer>
     </div>
 
     <script src="<?= $this->basePath() ?>/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const dropdownItems = document.querySelectorAll('.main-nav > li.has-submenu');
+
+            dropdownItems.forEach(function (item) {
+                const trigger = item.querySelector(':scope > a');
+                if (!trigger) {
+                    return;
+                }
+
+                trigger.addEventListener('click', function (event) {
+                    if (window.innerWidth <= 1100 || item.classList.contains('menu-open') === false) {
+                        event.preventDefault();
+                    }
+
+                    dropdownItems.forEach(function (other) {
+                        if (other !== item) {
+                            other.classList.remove('menu-open');
+                        }
+                    });
+
+                    item.classList.toggle('menu-open');
+                });
+
+                item.addEventListener('mouseleave', function () {
+                    item.classList.remove('menu-open');
+                });
+            });
+
+            document.addEventListener('click', function (event) {
+                dropdownItems.forEach(function (item) {
+                    if (!item.contains(event.target)) {
+                        item.classList.remove('menu-open');
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

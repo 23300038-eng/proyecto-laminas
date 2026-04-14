@@ -52,10 +52,11 @@ CREATE TABLE IF NOT EXISTS submodulo (
 );
 
 -- Tabla: Permisos-Perfil
--- Descripción: Define permisos por perfil y módulo
+-- Descripción: Define permisos por perfil y módulo/submódulo
 CREATE TABLE IF NOT EXISTS permisos_perfil (
     id SERIAL PRIMARY KEY,
     id_modulo INT NOT NULL,
+    id_submodulo INT,
     id_perfil INT NOT NULL,
     bit_agregar BOOLEAN DEFAULT FALSE,
     bit_editar BOOLEAN DEFAULT FALSE,
@@ -64,10 +65,13 @@ CREATE TABLE IF NOT EXISTS permisos_perfil (
     bit_detalle BOOLEAN DEFAULT FALSE,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (id_modulo, id_perfil),
     FOREIGN KEY (id_modulo) REFERENCES modulo(id) ON DELETE CASCADE,
+    FOREIGN KEY (id_submodulo) REFERENCES submodulo(id) ON DELETE CASCADE,
     FOREIGN KEY (id_perfil) REFERENCES perfil(id) ON DELETE CASCADE
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_permiso_perfil_modulo ON permisos_perfil(id_modulo, id_perfil) WHERE id_submodulo IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS ux_permiso_perfil_submodulo ON permisos_perfil(id_submodulo, id_perfil) WHERE id_submodulo IS NOT NULL;
 
 -- Tabla: Usuario
 -- Descripción: Usuarios del sistema
@@ -135,6 +139,7 @@ ON CONFLICT (str_nombre_perfil) DO NOTHING;
 
 -- Insertar módulos iniciales
 INSERT INTO modulo (str_nombre_modulo, str_icono, int_orden, bit_activo) VALUES 
+('Panel de Control', 'layout-dashboard', 0, TRUE),
 ('Seguridad', 'lock', 1, TRUE),
 ('Principal 1', 'home', 2, TRUE),
 ('Principal 2', 'cog', 3, TRUE)
@@ -144,8 +149,9 @@ ON CONFLICT (str_nombre_modulo) DO NOTHING;
 INSERT INTO submodulo (id_modulo, str_nombre_submodulo, str_ruta, int_orden, bit_activo) VALUES 
 ((SELECT id FROM modulo WHERE str_nombre_modulo = 'Seguridad'), 'Perfil', '/security/perfil', 1, TRUE),
 ((SELECT id FROM modulo WHERE str_nombre_modulo = 'Seguridad'), 'Módulo', '/security/modulo', 2, TRUE),
-((SELECT id FROM modulo WHERE str_nombre_modulo = 'Seguridad'), 'Permisos-Perfil', '/security/permisos-perfil', 3, TRUE),
-((SELECT id FROM modulo WHERE str_nombre_modulo = 'Seguridad'), 'Usuario', '/security/usuario', 4, TRUE)
+((SELECT id FROM modulo WHERE str_nombre_modulo = 'Seguridad'), 'Submódulo', '/security/submodulo', 3, TRUE),
+((SELECT id FROM modulo WHERE str_nombre_modulo = 'Seguridad'), 'Permisos-Perfil', '/security/permiso-perfil', 4, TRUE),
+((SELECT id FROM modulo WHERE str_nombre_modulo = 'Seguridad'), 'Usuario', '/security/usuario', 5, TRUE)
 ON CONFLICT (id_modulo, str_nombre_submodulo) DO NOTHING;
 
 -- Insertar submódulos para Principal 1

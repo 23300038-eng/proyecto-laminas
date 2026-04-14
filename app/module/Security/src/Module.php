@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Security;
 
+use Laminas\Db\Adapter\AdapterInterface;
 use Laminas\Mvc\MvcEvent;
 use Security\Listener\AuthorizationListener;
+use Security\Support\SchemaManager;
 
 class Module
 {
@@ -19,10 +21,12 @@ class Module
     public function onBootstrap(MvcEvent $e): void
     {
         $eventManager = $e->getApplication()->getEventManager();
-        $authListener = new AuthorizationListener();
-        
-        // Ejecutar el listener de autorización después de que se resuelva la ruta
-        // Con prioridad 900 para ejecutarse después de autenticación
-        $eventManager->attach(MvcEvent::EVENT_ROUTE, [$authListener, 'onRoute'], 900);
+        $container = $e->getApplication()->getServiceManager();
+        $db = $container->get(AdapterInterface::class);
+
+        SchemaManager::ensure($db);
+
+        $listener = new AuthorizationListener($db);
+        $eventManager->attach(MvcEvent::EVENT_ROUTE, [$listener, 'onRoute'], 900);
     }
 }
